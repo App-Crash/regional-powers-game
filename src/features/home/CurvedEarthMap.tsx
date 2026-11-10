@@ -4,8 +4,9 @@ import { initScene } from './SceneSetup';
 import { createDetailedBuilding } from './BuildingModels';
 import { createHexGridGroup, getHexCenterPosition } from './HexGridLayer';
 import { setupHexSelection } from './HexSelectionManager';
-import { TERRAIN_ROTATION_X } from './CurvedTerrain';
-import type { HexData } from './HexDataModel';
+import { getCurvatureHeight, TERRAIN_ROTATION_X } from './CurvedTerrain';
+import { TheaterViewport } from './TheaterViewport';
+import type { HexData } from './HexTypes';
 
 interface CurvedEarthMapProps {
   layers: {
@@ -30,25 +31,64 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
 
     const { scene, camera, renderer, controls } = initScene(container);
 
+    const theater = new TheaterViewport();
+    const activeTiles = theater.getActiveTiles();
+
+    // 🔑 Generous map plane sizing ensuring the image is strictly larger than the hex mesh
+    const planeWidth = 350;
+    const planeHeight = 350;
+    
+    const tileMapGroup = new THREE.Group();
+    tileMapGroup.rotation.x = TERRAIN_ROTATION_X;
+    tileMapGroup.position.set(0, -0.1, 0);
+
     const textureLoader = new THREE.TextureLoader();
-    const satelliteTexture = textureLoader.load('/regional-power-map.png', undefined, undefined, () => {
-      console.warn('Satellite underlay texture /regional-power-map.png not found.');
+    const totalCols = 16;
+    const totalRows = 16;
+
+    const subWidth = planeWidth / totalCols;
+    const subHeight = planeHeight / totalRows;
+
+    activeTiles.forEach(({ col, row, path }) => {
+      const tileTexture = textureLoader.load(
+        path,
+        (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+        },
+        undefined,
+        () => console.warn(`Tile texture ${path} not found.`)
+      );
+
+      const subGeo = new THREE.PlaneGeometry(subWidth, subHeight, 8, 8);
+      const subPos = subGeo.attributes.position;
+
+      const xOffset = (col - totalCols / 2 + 0.5) * subWidth;
+      const yOffset = (totalRows / 2 - 0.5 - row) * subHeight;
+
+      for (let i = 0; i < subPos.count; i++) {
+        const vx = subPos.getX(i) + xOffset;
+        const vy = subPos.getY(i) + yOffset;
+        subPos.setZ(i, getCurvatureHeight(vx, vy));
+      }
+      subGeo.computeVertexNormals();
+
+      const subMat = new THREE.MeshStandardMaterial({
+        map: tileTexture,
+        roughness: 0.8,
+        metalness: 0.1,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.95,
+      });
+
+      const tileMesh = new THREE.Mesh(subGeo, subMat);
+      tileMesh.position.set(xOffset, yOffset, 0);
+      tileMapGroup.add(tileMesh);
     });
 
-    const planeWidth = 71.25;
-    const planeHeight = 38.25;
-    const planeGeo = new THREE.PlaneGeometry(planeWidth, planeHeight, 32, 32);
-    const planeMat = new THREE.MeshBasicMaterial({
-      map: satelliteTexture,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: 0.85,
-    });
-    const backgroundPlane = new THREE.Mesh(planeGeo, planeMat);
-    backgroundPlane.rotation.x = TERRAIN_ROTATION_X;
-    backgroundPlane.position.set(0, -0.1, 0);
-    scene.add(backgroundPlane);
+    scene.add(tileMapGroup);
 
+    // Structures & Nodes locked to your simulation scale
     const structuresGroup = new THREE.Group();
     scene.add(structuresGroup);
 
@@ -81,7 +121,7 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
       structuresGroup.visible = layersRef.current.milUnits || layersRef.current.econ;
       gridGroup.visible = layersRef.current.hexGrid;
       controlGroup.visible = layersRef.current.politicalControl;
-      backgroundPlane.visible = layersRef.current.topology || layersRef.current.hexGrid;
+      tileMapGroup.visible = layersRef.current.topology || layersRef.current.hexGrid;
       controls.update();
       renderer.render(scene, camera);
     };

@@ -1,7 +1,5 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import sampleMapUrl from '../../assets/regional-power-map.png';
-import { getCurvatureHeight, TERRAIN_ROTATION_X } from './CurvedTerrain';
 
 export interface SceneSceneBundle {
   scene: THREE.Scene;
@@ -47,34 +45,6 @@ export function initScene(container: HTMLDivElement): SceneSceneBundle {
   const dirLight = new THREE.DirectionalLight(0xffffff, 1.3);
   dirLight.position.set(15, 25, 15);
   scene.add(dirLight);
-
-  // Curved Terrain Mesh
-  const planeWidth = 50;
-  const planeHeight = 35;
-  const geometry = new THREE.PlaneGeometry(planeWidth, planeHeight, 64, 64);
-  const pos = geometry.attributes.position;
-
-  for (let i = 0; i < pos.count; i++) {
-    const x = pos.getX(i);
-    const y = pos.getY(i);
-    pos.setZ(i, getCurvatureHeight(x, y));
-  }
-  geometry.computeVertexNormals();
-
-  const textureLoader = new THREE.TextureLoader();
-  textureLoader.load(sampleMapUrl, (texture) => {
-    texture.colorSpace = THREE.SRGBColorSpace;
-    const material = new THREE.MeshStandardMaterial({
-      map: texture,
-      roughness: 0.8,
-      metalness: 0.1,
-      side: THREE.DoubleSide,
-    });
-
-    const terrainMesh = new THREE.Mesh(geometry, material);
-    terrainMesh.rotation.x = TERRAIN_ROTATION_X;
-    scene.add(terrainMesh);
-  });
 
   return { scene, camera, renderer, controls };
 }

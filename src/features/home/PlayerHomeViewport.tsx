@@ -1,8 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { CurvedEarthMap } from './CurvedEarthMap';
-import type { HexData } from './HexDataModel';
+import type { HexData } from './HexTypes';
+import { TheaterViewport } from './TheaterViewport';
 
-export const PlayerHomeViewport: React.FC = () => {
+interface PlayerHomeViewportProps {
+  onLaunchCampaign?: (viewportBounds: any) => void;
+}
+
+export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ onLaunchCampaign }) => {
+  // Initialize the Theater Viewport controller (full 16x16 grid by default)
+  const theater = useMemo(() => new TheaterViewport(), []);
+
   const [layers, setLayers] = useState({
     hexGrid: true,
     topology: true,
@@ -32,6 +40,16 @@ export const PlayerHomeViewport: React.FC = () => {
       case null:
       default:
         return <span className="text-slate-500 font-semibold">N/A (International Waters)</span>;
+    }
+  };
+
+  const activeTiles = theater.getActiveTiles();
+
+  const handleLaunchCampaign = () => {
+    const bounds = theater.getBounds();
+    console.log("Launching campaign with viewport bounds:", bounds);
+    if (onLaunchCampaign) {
+      onLaunchCampaign(bounds);
     }
   };
 
@@ -86,6 +104,10 @@ export const PlayerHomeViewport: React.FC = () => {
 
         <div className="flex items-center gap-4 text-xs text-slate-400">
           <div className="hidden lg:flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded border border-slate-800">
+            <span className="text-slate-500">Active Grid:</span>
+            <span className="text-slate-200 font-mono">{activeTiles.length} Tiles</span>
+          </div>
+          <div className="hidden lg:flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded border border-slate-800">
             <span className="text-slate-500">Scale:</span>
             <span className="text-slate-200 font-mono">1 Hex = 50 km</span>
           </div>
@@ -93,6 +115,14 @@ export const PlayerHomeViewport: React.FC = () => {
             <span className="text-slate-500">Treasury:</span>
             <span className="text-emerald-400 font-mono font-medium">12,450 Cr</span>
           </div>
+
+          {/* Launch Campaign Action Button */}
+          <button
+            onClick={handleLaunchCampaign}
+            className="px-4 py-2 text-xs font-bold text-slate-950 bg-sky-400 hover:bg-sky-300 rounded transition shadow-lg tracking-wider"
+          >
+            LAUNCH CAMPAIGN
+          </button>
         </div>
       </header>
 
