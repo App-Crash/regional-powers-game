@@ -1,66 +1,94 @@
 import * as THREE from 'three';
-import { createHexHighlightMesh } from './HexGridLayer';
+import { GLOBAL_HEX_DATA, createHexHighlightMesh } from './HexGridLayer';
+import type { HexData } from './HexDataModel';
 
-export interface HexMetadata {
-  id: string;
-  q: number;
-  r: number;
-  title: string;
-  brigade: string;
-  resource: string;
-  terrain: string;
-}
+const HEX_SIZE = 1.3;
+const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
+const HEX_HEIGHT = 2 * HEX_SIZE;
 
 export function setupHexSelection(
-  domElement: HTMLCanvasElement,
-  camera: THREE.PerspectiveCamera,
+  domElement: HTMLElement,
+  camera: THREE.Camera,
   scene: THREE.Scene,
   hexGridGroup: THREE.Group,
-  onSelectHex: (hex: HexMetadata) => void
-): () => void {
+  onSelectHex: (hex: HexData | null) => void
+) {
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
   let currentHighlight: THREE.Object3D | null = null;
 
-  const handleMouseDown = (event: MouseEvent) => {
-    // Reversal: Left-Click Selection Protocol (button === 0)
-    if (event.button !== 0) return;
+  const onClick = (event: MouseEvent) => {
+    if (event.button !== 0) return; // Left-click only
 
     const rect = domElement.getBoundingClientRect();
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(hexGridGroup.children, true);
-    const hexHit = intersects.find(i => i.object.userData && i.object.userData.type === 'hex');
+    const raycastPlane = hexGridGroup.getObjectByName('HexRaycastPlane');
+    if (!raycastPlane) return;
 
-    if (hexHit) {
-      const { id, q, r } = hexHit.object.userData;
+    const intersects = raycaster.intersectObject(raycastPlane);
 
-      if (currentHighlight) {
-        scene.remove(currentHighlight);
+    if (intersects.length > 0) {
+      const hitPoint = intersects[0].point;
+
+      // Reverse the terrain rotation on the hit point to evaluate flat axial space accurately
+      // rotX is ~ -0.35 rad
+      const rotX = -0.35; 
+      const unrotatedY = hitPoint.y * Math.cos(rotX) + hitPoint.z * Math.sin(rotX);
+      const unrotatedX = hitPoint.x;
+
+      // Inverse axial coordinate conversion from cartesian (unrotatedX, unrotatedY)
+      const qFloat = (unrotatedX * Math.sqrt(3) / 3 - unrotatedY / 3) / HEX_SIZE;
+      const rFloat = (unrotatedX * 0 + unrotatedY * 2 / 3) / HEX_SIZE;
+
+      // Round axial coordinates to nearest valid integer hex grid coordinate
+      const q = Math.round(qFloat);
+      const r = Math.round(rFloat);
+      const s = -q - r;
+
+      // Validate against our map bounds (-17 to 17)
+      const hexKey = `hex_${q}_${r}`;
+      let selectedHex: HexData | undefined = GLOBAL_HEX_DATA.get(hexKey);
+
+      // Fallback: nearest neighbor search if edge boundary rounding drifts slightly
+      if (!selectedHex) {
+        let minDist = Infinity;
+        GLOBAL_HEX_DATA.forEach((hex) => {
+          const dist = Math.hypot(hex.wx - unrotatedX, hex.wy - unrotatedY);
+          if (dist < minDist) {
+            minDist = dist;
+            selectedHex = hex;
+          }
+        });
       }
 
-      const highlight = createHexHighlightMesh(q, r);
-      scene.add(highlight);
-      currentHighlight = highlight;
+      if (selectedHex) {
+        onSelectHex(selectedHex);
 
-      onSelectHex({
-        id,
-        q,
-        r,
-        title: `Sector [${q}, ${r}]`,
-        brigade: (q === 4 && r === -3) ? 'Forward Air Brigade' : (q === 0 && r === 0) ? 'Command Staff HQ' : '54th Mechanized Infantry',
-        resource: (q === -3 && r === 2) ? 'Manufacturing Hub' : 'Rare Earths Deposit',
-        terrain: (q > 3) ? 'Coastal Delta' : 'Mountainous Sector',
-      });
+        if (currentHighlight) {
+          scene.remove(currentHighlight);
+        }
+        currentHighlight = createHexHighlightMesh(selectedHex.q, selectedHex.r);
+        scene.add(currentHighlight);
+        return;
+      }
+    }
+
+    onSelectHex(null);
+    if (currentHighlight) {
+      scene.remove(currentHighlight);
+      currentHighlight = null;
     }
   };
 
-  domElement.addEventListener('mousedown', handleMouseDown, { capture: true });
+  domElement.addEventListener('click', onClick);
 
   return () => {
-    domElement.removeEventListener('mousedown', handleMouseDown, { capture: true });
-    if (currentHighlight) scene.remove(currentHighlight);
+    domElement.removeEventListener('click', onClick);
+    if (currentHighlight) {
+      scene.remove(currentHighlight);
+    }
   };
 }

@@ -5,7 +5,7 @@ import { createDetailedBuilding } from './BuildingModels';
 import { createHexGridGroup, getHexCenterPosition } from './HexGridLayer';
 import { setupHexSelection } from './HexSelectionManager';
 import { TERRAIN_ROTATION_X } from './CurvedTerrain';
-import type { HexMetadata } from './HexSelectionManager';
+import type { HexData } from './HexDataModel';
 
 interface CurvedEarthMapProps {
   layers: {
@@ -14,8 +14,9 @@ interface CurvedEarthMapProps {
     resources: boolean;
     econ: boolean;
     milUnits: boolean;
+    politicalControl: boolean;
   };
-  onSelectHex: (hex: HexMetadata | null) => void;
+  onSelectHex: (hex: HexData | null) => void;
 }
 
 export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelectHex }) => {
@@ -27,13 +28,11 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
     const container = containerRef.current;
     if (!container) return;
 
-    // 1. Initialize Scene & Camera Controls
     const { scene, camera, renderer, controls } = initScene(container);
 
-    // 2. Custom Satellite Background Plane (1345x722 screenshot scaled to 71.25 x 38.25 world units)
     const textureLoader = new THREE.TextureLoader();
     const satelliteTexture = textureLoader.load('/regional-power-map.png', undefined, undefined, () => {
-      console.warn('Satellite underlay texture /regional-power-map.png not found. Falling back to procedural terrain.');
+      console.warn('Satellite underlay texture /regional-power-map.png not found.');
     });
 
     const planeWidth = 71.25;
@@ -47,10 +46,9 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
     });
     const backgroundPlane = new THREE.Mesh(planeGeo, planeMat);
     backgroundPlane.rotation.x = TERRAIN_ROTATION_X;
-    backgroundPlane.position.set(0, -0.1, 0); // Positioned right beneath the hex grid
+    backgroundPlane.position.set(0, -0.1, 0);
     scene.add(backgroundPlane);
 
-    // 3. Structure & Hex Layer Groups (~30x30 Grid)
     const structuresGroup = new THREE.Group();
     scene.add(structuresGroup);
 
@@ -66,24 +64,23 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
     const portPos = getHexCenterPosition(6, 5);
     structuresGroup.add(createDetailedBuilding('n4', portPos.x, portPos.y, 'PORT'));
 
-    const hexGridGroup = createHexGridGroup();
-    scene.add(hexGridGroup);
+    const { gridGroup, controlGroup } = createHexGridGroup();
+    scene.add(gridGroup);
 
-    // 4. Right-Click Hex Selection Setup
     const cleanupSelection = setupHexSelection(
       renderer.domElement,
       camera,
       scene,
-      hexGridGroup,
+      gridGroup,
       (hex) => onSelectHex(hex)
     );
 
-    // 5. Render & Animation Loop
     let animationFrameId: number;
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
       structuresGroup.visible = layersRef.current.milUnits || layersRef.current.econ;
-      hexGridGroup.visible = layersRef.current.hexGrid;
+      gridGroup.visible = layersRef.current.hexGrid;
+      controlGroup.visible = layersRef.current.politicalControl;
       backgroundPlane.visible = layersRef.current.topology || layersRef.current.hexGrid;
       controls.update();
       renderer.render(scene, camera);
