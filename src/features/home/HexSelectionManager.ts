@@ -1,10 +1,6 @@
 import * as THREE from 'three';
-import { GLOBAL_HEX_DATA, createHexHighlightMesh } from './HexGridLayer';
-import type { HexData } from './HexDataModel';
-
-const HEX_SIZE = 1.3;
-const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
-const HEX_HEIGHT = 2 * HEX_SIZE;
+import { createHexHighlightMesh } from './HexGridLayerDebug';
+import type { HexData } from './HexTypes';
 
 export function setupHexSelection(
   domElement: HTMLElement,
@@ -16,79 +12,82 @@ export function setupHexSelection(
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();
   let currentHighlight: THREE.Object3D | null = null;
+  let clickStartTime = 0;
+  let clickCounter = 0;
+
+  const onMouseDown = (event: MouseEvent) => {
+    if (event.button !== 0) return;
+    clickStartTime = Date.now();
+  };
 
   const onClick = (event: MouseEvent) => {
-    if (event.button !== 0) return; // Left-click only
+    if (event.button !== 0) return;
+    
+    clickCounter++;
+    const duration = Date.now() - clickStartTime;
+    if (duration > 300) return; // Ignore drags
 
     const rect = domElement.getBoundingClientRect();
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
     raycaster.setFromCamera(mouse, camera);
-    const raycastPlane = hexGridGroup.getObjectByName('HexRaycastPlane');
-    if (!raycastPlane) return;
 
-    const intersects = raycaster.intersectObject(raycastPlane);
+    const hitTargets: THREE.Object3D[] = [];
+    hexGridGroup.traverse((child) => {
+      if (child instanceof THREE.Mesh && child.userData && child.userData.hexData) {
+        hitTargets.push(child);
+      }
+    });
+
+    const intersects = raycaster.intersectObjects(hitTargets, false);
 
     if (intersects.length > 0) {
-      const hitPoint = intersects[0].point;
+      const hitMesh = intersects[0].object;
+      const selectedHex = hitMesh.userData?.hexData as HexData | undefined;
 
-      // Reverse the terrain rotation on the hit point to evaluate flat axial space accurately
-      // rotX is ~ -0.35 rad
-      const rotX = -0.35; 
-      const unrotatedY = hitPoint.y * Math.cos(rotX) + hitPoint.z * Math.sin(rotX);
-      const unrotatedX = hitPoint.x;
-
-      // Inverse axial coordinate conversion from cartesian (unrotatedX, unrotatedY)
-      const qFloat = (unrotatedX * Math.sqrt(3) / 3 - unrotatedY / 3) / HEX_SIZE;
-      const rFloat = (unrotatedX * 0 + unrotatedY * 2 / 3) / HEX_SIZE;
-
-      // Round axial coordinates to nearest valid integer hex grid coordinate
-      const q = Math.round(qFloat);
-      const r = Math.round(rFloat);
-      const s = -q - r;
-
-      // Validate against our map bounds (-17 to 17)
-      const hexKey = `hex_${q}_${r}`;
-      let selectedHex: HexData | undefined = GLOBAL_HEX_DATA.get(hexKey);
-
-      // Fallback: nearest neighbor search if edge boundary rounding drifts slightly
-      if (!selectedHex) {
-        let minDist = Infinity;
-        GLOBAL_HEX_DATA.forEach((hex) => {
-          const dist = Math.hypot(hex.wx - unrotatedX, hex.wy - unrotatedY);
-          if (dist < minDist) {
-            minDist = dist;
-            selectedHex = hex;
-          }
-        });
-      }
+      console.log(`--- CLICK DIAGNOSTIC #${clickCounter} (SUCCESS) ---`, {
+        hitHex: selectedHex ? { q: selectedHex.q, r: selectedHex.r } : null,
+        hitPoint3D: { 
+          x: intersects[0].point.x.toFixed(2), 
+          y: intersects[0].point.y.toFixed(2), 
+          z: intersects[0].point.z.toFixed(2) 
+        }
+      });
 
       if (selectedHex) {
         onSelectHex(selectedHex);
-
+        
+        // 🔑 Remove previous highlight from hexGridGroup
         if (currentHighlight) {
-          scene.remove(currentHighlight);
+          hexGridGroup.remove(currentHighlight);
         }
+
+        // 🔑 Add new highlight directly to hexGridGroup so it matches local space & curvature
         currentHighlight = createHexHighlightMesh(selectedHex.q, selectedHex.r);
-        scene.add(currentHighlight);
+        hexGridGroup.add(currentHighlight);
         return;
       }
+    } else {
+      console.warn(`[CLICK #${clickCounter}] Raycast missed all hex hit meshes.`);
     }
 
     onSelectHex(null);
     if (currentHighlight) {
-      scene.remove(currentHighlight);
+      hexGridGroup.remove(currentHighlight);
       currentHighlight = null;
     }
   };
 
+  domElement.addEventListener('mousedown', onMouseDown);
   domElement.addEventListener('click', onClick);
 
   return () => {
+    domElement.removeEventListener('mousedown', onMouseDown);
     domElement.removeEventListener('click', onClick);
     if (currentHighlight) {
-      scene.remove(currentHighlight);
+      hexGridGroup.remove(currentHighlight);
+      currentHighlight = null;
     }
   };
 }
