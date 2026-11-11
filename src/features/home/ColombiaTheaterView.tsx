@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { initializeTheaterScene } from '../../rendering/loadTheaterScene';
-import { type RuntimeHexEntity } from '../../services/gameApi';
+import { type RuntimeHexEntity } from '../../features/home/HexTypes';
 import { AssetDetailsModal } from '../../components/AssetDetailsModal';
 
 export const ColombiaTheaterView: React.FC = () => {

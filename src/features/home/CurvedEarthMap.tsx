@@ -6,8 +6,9 @@ import { setupHexSelection } from './HexSelectionManager';
 import { getCurvatureHeight, TERRAIN_ROTATION_X } from './CurvedTerrain';
 import { TheaterViewport } from './TheaterViewport';
 import { initializeTheaterScene } from '../../rendering/loadTheaterScene';
+import { createInternationalBordersGroup } from '../../rendering/renderBorders';
 import type { HexData } from './HexTypes';
-import type { RuntimeHexEntity } from '../../services/gameApi';
+import type { RuntimeHexEntity } from './HexTypes';
 
 interface CurvedEarthMapProps {
   layers: {
@@ -17,6 +18,7 @@ interface CurvedEarthMapProps {
     econ: boolean;
     milUnits: boolean;
     politicalControl: boolean;
+    borders?: boolean;
   };
   onSelectHex: (hex: HexData | null) => void;
 }
@@ -106,6 +108,10 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
       console.log('[CurvedEarthMap] Colombia theater structures initialized:', Object.keys(registry).length, 'hubs loaded.');
     });
 
+    // 🌐 International Borders Group
+    const bordersGroup = createInternationalBordersGroup();
+    scene.add(bordersGroup);
+
     const { gridGroup, controlGroup } = createHexGridGroup();
     scene.add(gridGroup);
 
@@ -121,6 +127,7 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
       structuresGroup.visible = layersRef.current.milUnits || layersRef.current.econ;
+      bordersGroup.visible = layersRef.current.borders ?? layersRef.current.politicalControl;
       gridGroup.visible = layersRef.current.hexGrid;
       controlGroup.visible = layersRef.current.politicalControl;
       tileMapGroup.visible = layersRef.current.topology || layersRef.current.hexGrid;

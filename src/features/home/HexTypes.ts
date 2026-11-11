@@ -14,6 +14,29 @@ export type TerrainType =
 
 export type FactionControl = 'player' | 'enemy' | 'neutral' | 'ally' | null;
 
+export type OperationalState = 'online' | 'offline';
+
+export type InfrastructureCategory = 
+  | 'ELECTRIC_GENERATION'
+  | 'ELECTRIC_DISTRIBUTION'
+  | 'WATER_TREATMENT'
+  | 'CIVIL_LOGISTICS'
+  | 'TRANSPORTATION'
+  | 'HEAVY_MANUFACTURING'
+  | 'CONSUMER_MANUFACTURING'
+  | 'COMMUNICATIONS';
+
+export interface InfrastructureNode {
+  id: string;
+  name: string;
+  category: InfrastructureCategory;
+  tier: number;
+  capacity: number;
+  state: OperationalState;
+  maintenance_repair_duration: number;
+  maintenance_repair_progress: number;
+}
+
 export interface HexData {
   id: string;
   q: number;
@@ -25,6 +48,11 @@ export interface HexData {
   wx: number;
   wy: number;
   controlledBy: FactionControl;
+}
+
+export interface RuntimeHexEntity extends HexData {
+  settlementName?: string;
+  infrastructureNodes: InfrastructureNode[];
 }
 
 export interface SectorRecord {

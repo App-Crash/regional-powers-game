@@ -1,5 +1,5 @@
 import React from 'react';
-import { type RuntimeHexEntity, type InfrastructureNode } from '../services/gameApi';
+import { type RuntimeHexEntity, type InfrastructureNode } from '../features/home/HexTypes';
 
 interface AssetDetailsModalProps {
   hexData: RuntimeHexEntity | null;

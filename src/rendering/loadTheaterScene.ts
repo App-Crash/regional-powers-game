@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { gameApi, type RuntimeHexEntity } from '../services/gameApi';
+import { gameApi } from '../services/gameApi';
+import { type RuntimeHexEntity } from '../features/home/HexTypes';
 import { createEmergentHexStructures } from './proceduralCityEngine';
 
 export async function initializeTheaterScene(sceneGroup: THREE.Group): Promise<Record<string, RuntimeHexEntity>> {

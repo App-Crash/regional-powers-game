@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,7 +13,6 @@
     overflow: hidden;
     background-color: #020617;
     color-scheme: dark;
-    /* Forces a clean, rounded sans-serif font stack globally */
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   }
 
@@ -31,6 +32,49 @@
   overflow: hidden;
 }
 
+/* 📺 1983 WarGames / WOPR Terminal Styling */
+
+.font-wargames {
+  font-family: 'VT323', monospace !important;
+}
+
+/* Authentic Amber Phosphor Glow (WOPR Mainframe) */
+.wargames-amber {
+  font-family: 'VT323', monospace !important;
+  color: #f59e0b;
+  text-shadow: 0 0 6px rgba(245, 158, 11, 0.7), 0 0 18px rgba(245, 158, 11, 0.35);
+}
+
+/* Alternate Green Phosphor Glow (NORAD Radar Screens) */
+.wargames-green {
+  font-family: 'VT323', monospace !important;
+  color: #22c55e;
+  text-shadow: 0 0 6px rgba(34, 197, 94, 0.7), 0 0 18px rgba(34, 197, 94, 0.35);
+}
+
+/* Optional CRT Scanline Overlay for viewports and terminal frames */
+.crt-scanlines {
+  position: relative;
+}
+.crt-scanlines::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.02),
+    rgba(0, 255, 0, 0.01),
+    rgba(0, 0, 255, 0.02)
+  );
+  background-size: 100% 4px, 6px 100%;
+  pointer-events: none;
+  z-index: 50;
+}
+
 /* Global table cell padding & border safety rules */
 table {
   border-collapse: collapse;
@@ -38,7 +82,7 @@ table {
 }
 
 th, td {
-  padding: 12px 16px; /* Generous cell padding so icons and text never touch borders */
+  padding: 12px 16px;
   text-align: left;
   vertical-align: middle;
 }
