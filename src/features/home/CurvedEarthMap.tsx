@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { initScene } from './SceneSetup';
-import { createDetailedBuilding } from './BuildingModels';
-import { createHexGridGroup, getHexCenterPosition } from './HexGridLayerDebug';
+import { createHexGridGroup } from './HexGridLayerDebug';
 import { setupHexSelection } from './HexSelectionManager';
 import { getCurvatureHeight, TERRAIN_ROTATION_X } from './CurvedTerrain';
 import { TheaterViewport } from './TheaterViewport';
+import { initializeTheaterScene } from '../../rendering/loadTheaterScene';
 import type { HexData } from './HexTypes';
+import type { RuntimeHexEntity } from '../../services/gameApi';
 
 interface CurvedEarthMapProps {
   layers: {
@@ -89,27 +90,21 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
       });
 
       const tileMesh = new THREE.Mesh(subGeo, subMat);
-      // Position offset is now fully handled by vertex transformation
       tileMapGroup.add(tileMesh);
     });
 
     scene.add(tileMapGroup);
 
-    // Structures & Nodes locked to simulation scale
+    // 🏙️ Emergent Colombia Theater Structures Group
     const structuresGroup = new THREE.Group();
+    structuresGroup.name = 'ColombiaTheaterStructures';
     scene.add(structuresGroup);
 
-    const capPos = getHexCenterPosition(0, 0);
-    structuresGroup.add(createDetailedBuilding('n1', capPos.x, capPos.y, 'CAPITAL'));
-
-    const mfgPos = getHexCenterPosition(-4, 3);
-    structuresGroup.add(createDetailedBuilding('n2', mfgPos.x, mfgPos.y, 'MANUFACTURING'));
-
-    const milPos = getHexCenterPosition(5, -4);
-    structuresGroup.add(createDetailedBuilding('n3', milPos.x, milPos.y, 'MILITARY_BASE'));
-
-    const portPos = getHexCenterPosition(6, 5);
-    structuresGroup.add(createDetailedBuilding('n4', portPos.x, portPos.y, 'PORT'));
+    let hexRegistryMap: Record<string, RuntimeHexEntity> = {};
+    initializeTheaterScene(structuresGroup).then((registry) => {
+      hexRegistryMap = registry;
+      console.log('[CurvedEarthMap] Colombia theater structures initialized:', Object.keys(registry).length, 'hubs loaded.');
+    });
 
     const { gridGroup, controlGroup } = createHexGridGroup();
     scene.add(gridGroup);
