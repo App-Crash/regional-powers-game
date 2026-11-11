@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { initScene } from './SceneSetup';
 import { createDetailedBuilding } from './BuildingModels';
-import { createHexGridGroup, getHexCenterPosition } from './HexGridLayer';
+import { createHexGridGroup, getHexCenterPosition } from './HexGridLayerDebug';
 import { setupHexSelection } from './HexSelectionManager';
 import { getCurvatureHeight, TERRAIN_ROTATION_X } from './CurvedTerrain';
 import { TheaterViewport } from './TheaterViewport';
@@ -34,13 +34,13 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
     const theater = new TheaterViewport();
     const activeTiles = theater.getActiveTiles();
 
-    // 🔑 Generous map plane sizing ensuring the image is strictly larger than the hex mesh
     const planeWidth = 350;
     const planeHeight = 350;
     
+    // 🔑 Match HexGridLayer architecture: use unrotated group and bake rotation/curvature directly into vertices
     const tileMapGroup = new THREE.Group();
-    tileMapGroup.rotation.x = TERRAIN_ROTATION_X;
-    tileMapGroup.position.set(0, -0.1, 0);
+    tileMapGroup.name = 'TileMapGroup';
+    tileMapGroup.position.set(0, 0, 0);
 
     const textureLoader = new THREE.TextureLoader();
     const totalCols = 16;
@@ -48,6 +48,7 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
 
     const subWidth = planeWidth / totalCols;
     const subHeight = planeHeight / totalRows;
+    const rotX = TERRAIN_ROTATION_X;
 
     activeTiles.forEach(({ col, row, path }) => {
       const tileTexture = textureLoader.load(
@@ -59,16 +60,22 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
         () => console.warn(`Tile texture ${path} not found.`)
       );
 
-      const subGeo = new THREE.PlaneGeometry(subWidth, subHeight, 8, 8);
+      const subGeo = new THREE.PlaneGeometry(subWidth, subHeight, 16, 16);
       const subPos = subGeo.attributes.position;
 
       const xOffset = (col - totalCols / 2 + 0.5) * subWidth;
       const yOffset = (totalRows / 2 - 0.5 - row) * subHeight;
 
+      // 🔑 Apply exact same vertex transformation formula as HexGridLayer
       for (let i = 0; i < subPos.count; i++) {
         const vx = subPos.getX(i) + xOffset;
         const vy = subPos.getY(i) + yOffset;
-        subPos.setZ(i, getCurvatureHeight(vx, vy));
+        const vz = getCurvatureHeight(vx, vy);
+
+        const rotatedY = vy * Math.cos(rotX) - vz * Math.sin(rotX);
+        const rotatedZ = vy * Math.sin(rotX) + vz * Math.cos(rotX);
+
+        subPos.setXYZ(i, vx, rotatedY, rotatedZ);
       }
       subGeo.computeVertexNormals();
 
@@ -82,13 +89,13 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
       });
 
       const tileMesh = new THREE.Mesh(subGeo, subMat);
-      tileMesh.position.set(xOffset, yOffset, 0);
+      // Position offset is now fully handled by vertex transformation
       tileMapGroup.add(tileMesh);
     });
 
     scene.add(tileMapGroup);
 
-    // Structures & Nodes locked to your simulation scale
+    // Structures & Nodes locked to simulation scale
     const structuresGroup = new THREE.Group();
     scene.add(structuresGroup);
 
