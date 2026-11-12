@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { initScene } from './SceneSetup';
 import { createHexGridGroup } from './HexGridLayerDebug';
@@ -7,8 +7,8 @@ import { getCurvatureHeight, TERRAIN_ROTATION_X } from './CurvedTerrain';
 import { TheaterViewport } from './TheaterViewport';
 import { initializeTheaterScene } from '../../rendering/loadTheaterScene';
 import { createBorderTextureOverlay } from '../../rendering/CurvedBorderOverlay';
-import type { HexData } from './HexTypes';
-import type { RuntimeHexEntity } from './HexTypes';
+import { HexDetailsModal } from '../../components/HexDetailsModal';
+import type { HexData, RuntimeHexEntity } from './HexTypes';
 
 interface CurvedEarthMapProps {
   layers: {
@@ -20,13 +20,22 @@ interface CurvedEarthMapProps {
     politicalControl: boolean;
     borders?: boolean;
   };
-  onSelectHex: (hex: HexData | null) => void;
+  onSelectHex?: (hex: HexData | RuntimeHexEntity | null) => void;
 }
 
 export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelectHex }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const layersRef = useRef(layers);
   layersRef.current = layers;
+
+  const [selectedHex, setSelectedHex] = useState<HexData | RuntimeHexEntity | null>(null);
+
+  const handleSelectHex = (hex: HexData | RuntimeHexEntity | null) => {
+    setSelectedHex(hex);
+    if (onSelectHex) {
+      onSelectHex(hex);
+    }
+  };
 
   useEffect(() => {
     const container = containerRef.current;
@@ -40,7 +49,6 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
     const planeWidth = 350;
     const planeHeight = 350;
     
-    // 🔑 Match HexGridLayer architecture: use unrotated group and bake rotation/curvature directly into vertices
     const tileMapGroup = new THREE.Group();
     tileMapGroup.name = 'TileMapGroup';
     tileMapGroup.position.set(0, 0, 0);
@@ -56,9 +64,7 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
     activeTiles.forEach(({ col, row, path }) => {
       const tileTexture = textureLoader.load(
         path,
-        (tex) => {
-          tex.colorSpace = THREE.SRGBColorSpace;
-        },
+        (tex) => { tex.colorSpace = THREE.SRGBColorSpace; },
         undefined,
         () => console.warn(`Tile texture ${path} not found.`)
       );
@@ -69,7 +75,6 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
       const xOffset = (col - totalCols / 2 + 0.5) * subWidth;
       const yOffset = (totalRows / 2 - 0.5 - row) * subHeight;
 
-      // 🔑 Apply exact same vertex transformation formula as HexGridLayer
       for (let i = 0; i < subPos.count; i++) {
         const vx = subPos.getX(i) + xOffset;
         const vy = subPos.getY(i) + yOffset;
@@ -102,13 +107,11 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
     structuresGroup.name = 'ColombiaTheaterStructures';
     scene.add(structuresGroup);
 
-    let hexRegistryMap: Record<string, RuntimeHexEntity> = {};
     initializeTheaterScene(structuresGroup).then((registry) => {
-      hexRegistryMap = registry;
       console.log('[CurvedEarthMap] Colombia theater structures initialized:', Object.keys(registry).length, 'hubs loaded.');
     });
 
-    // 🌐 International Borders Texture Overlay Group (Synchronous creation with async texture loading)
+    // 🌐 International Borders Texture Overlay Group
     const bordersGroup = createBorderTextureOverlay('/assets/colombia_border_stencil.png', -4, 9);
     scene.add(bordersGroup);
 
@@ -120,7 +123,7 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
       camera,
       scene,
       gridGroup,
-      (hex) => onSelectHex(hex)
+      (hex) => handleSelectHex(hex)
     );
 
     let animationFrameId: number;
@@ -154,9 +157,22 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
         container.removeChild(renderer.domElement);
       }
     };
-  }, [onSelectHex]);
+  }, []);
 
   return (
-    <div ref={containerRef} className="absolute inset-0 w-full h-full bg-slate-950 select-none overflow-hidden" />
+    <div className="relative w-full h-screen bg-slate-950 select-none overflow-hidden">
+      {/* 3D WebGL Viewport Canvas Container */}
+      <div ref={containerRef} className="absolute inset-0 w-full h-full" />
+
+      {/* UI Overlay Layer with correct pointer-events stacking */}
+      <div className="absolute inset-0 pointer-events-none z-50">
+        <div className="pointer-events-auto">
+          <HexDetailsModal 
+            selectedHex={selectedHex} 
+            onClose={() => handleSelectHex(null)} 
+          />
+        </div>
+      </div>
+    </div>
   );
 };

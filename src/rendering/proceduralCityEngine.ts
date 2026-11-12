@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { type RuntimeHexEntity } from '../services/gameApi';
+import { type RuntimeHexEntity, type InfraNode } from '../features/home/HexTypes';
 import { getHexCenterPosition } from '../features/home/HexGridLayerDebug';
 import { alignToSurfaceNormal } from '../features/home/CurvedTerrain';
 
@@ -7,23 +7,37 @@ const HEX_SIZE = 1.3;
 const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
 const HEX_HEIGHT = 2 * HEX_SIZE;
 
-const matUrbanTower = new THREE.MeshStandardMaterial({ color: 0x3b82f6, roughness: 0.3, metalness: 0.3 });
-const matUrbanMid = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.5 });
-const matFactory = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.7, metalness: 0.4 });
-const matStack = new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8 });
-const matBase = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.6 });
-const matRuins = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.9 });
+const matUrbanTower = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.3, metalness: 0.4 });
+const matUrbanMid = new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.5, metalness: 0.3 });
+const matFactory = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7, metalness: 0.5 });
+const matStack = new THREE.MeshStandardMaterial({ color: 0x94a3b8, roughness: 0.4, metalness: 0.8 });
+const matBase = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.8 });
+const matRuins = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9 });
 
 export function createEmergentHexStructures(hex: RuntimeHexEntity): THREE.Group {
   const hexGroup = new THREE.Group();
-  hexGroup.userData = { hexId: hex.id, q: hex.q, r: hex.r, type: 'hex_structure_cluster' };
+  // Bind both identifier fields and the full runtimeHex object for bulletproof raycasting
+  hexGroup.userData = { 
+    hexId: hex.id, 
+    q: hex.q, 
+    r: hex.r, 
+    type: 'hex_structure_cluster',
+    runtimeHex: hex 
+  };
 
   const pop = hex.population;
-  const isGreyZone = hex.controlledBy === null || pop < 500;
+  const isGreyZone = hex.ctrl === null || pop < 500;
   
-  const industrialTierSum = hex.infrastructureNodes
-    .filter(n => (n.category === 'HEAVY_MANUFACTURING' || n.category === 'CONSUMER_MANUFACTURING') && n.state === 'online')
-    .reduce((acc, n) => acc + (n.tier * (n.capacity / 100)), 0);
+  const nodes = hex.infra_nodes || (hex as any).infrastructureNodes || [];
+  const industrialTierSum = nodes
+    .filter((n: InfraNode & { cat?: string; category?: string }) => {
+      const c = n.cat || n.category;
+      return (c === 'HVY_MFG' || c === 'CON_MFG') && n.state === 'online';
+    })
+    .reduce((acc: number, n: InfraNode & { cap?: number; capacity?: number }) => {
+      const capacityVal = n.cap ?? n.capacity ?? 100;
+      return acc + (n.tier * (capacityVal / 100));
+    }, 0);
 
   const baseGeo = new THREE.CylinderGeometry(0.85, 0.95, 0.08, 12);
   const baseMesh = new THREE.Mesh(baseGeo, matBase);

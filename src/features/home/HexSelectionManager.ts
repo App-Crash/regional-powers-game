@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { createHexHighlightMesh } from './HexGridLayerDebug';
-import type { HexData } from './HexTypes';
+import type { HexData, RuntimeHexEntity } from './HexTypes';
 
 export function setupHexSelection(
   domElement: HTMLElement,
@@ -33,21 +33,47 @@ export function setupHexSelection(
 
     raycaster.setFromCamera(mouse, camera);
 
+    // Collect pickable hit targets from both the grid layer and the entire scene (structures, etc.)
     const hitTargets: THREE.Object3D[] = [];
-    hexGridGroup.traverse((child) => {
-      if (child instanceof THREE.Mesh && child.userData && child.userData.hexData) {
-        hitTargets.push(child);
+    scene.traverse((child) => {
+      if (child instanceof THREE.Mesh) {
+        // Check if this mesh or any parent group holds hexData or runtimeHex
+        let p: THREE.Object3D | null = child;
+        let hasData = false;
+        while (p) {
+          if (p.userData?.hexData || p.userData?.runtimeHex) {
+            hasData = true;
+            break;
+          }
+          p = p.parent;
+        }
+        if (hasData) {
+          hitTargets.push(child);
+        }
       }
     });
 
     const intersects = raycaster.intersectObjects(hitTargets, false);
 
     if (intersects.length > 0) {
-      const hitMesh = intersects[0].object;
-      const selectedHex = hitMesh.userData?.hexData as HexData | undefined;
+      let obj: THREE.Object3D | null = intersects[0].object;
+      let selectedHex: (HexData | RuntimeHexEntity) | undefined = undefined;
+
+      // Traverse up to find hexData or runtimeHex
+      while (obj) {
+        if (obj.userData?.hexData) {
+          selectedHex = obj.userData.hexData;
+          break;
+        }
+        if (obj.userData?.runtimeHex) {
+          selectedHex = obj.userData.runtimeHex;
+          break;
+        }
+        obj = obj.parent;
+      }
 
       console.log(`--- CLICK DIAGNOSTIC #${clickCounter} (SUCCESS) ---`, {
-        hitHex: selectedHex ? { q: selectedHex.q, r: selectedHex.r } : null,
+        hitHex: selectedHex ? { q: selectedHex.q, r: selectedHex.r, sett_name: selectedHex.sett_name } : null,
         hitPoint3D: { 
           x: intersects[0].point.x.toFixed(2), 
           y: intersects[0].point.y.toFixed(2), 
@@ -58,18 +84,18 @@ export function setupHexSelection(
       if (selectedHex) {
         onSelectHex(selectedHex);
         
-        // 🔑 Remove previous highlight from hexGridGroup
+        // Remove previous highlight
         if (currentHighlight) {
           hexGridGroup.remove(currentHighlight);
         }
 
-        // 🔑 Add new highlight directly to hexGridGroup so it matches local space & curvature
+        // Add new highlight to grid group
         currentHighlight = createHexHighlightMesh(selectedHex.q, selectedHex.r);
         hexGridGroup.add(currentHighlight);
         return;
       }
     } else {
-      console.warn(`[CLICK #${clickCounter}] Raycast missed all hex hit meshes.`);
+      console.warn(`[CLICK #${clickCounter}] Raycast missed all valid hex and structure hit targets.`);
     }
 
     onSelectHex(null);

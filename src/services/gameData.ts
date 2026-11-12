@@ -6,23 +6,23 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     q: -10,
     r: 7,
     terrain: 'port',
-    infrastructure: 8,
+    infra: 8,
     population: 1010995,
     elevation: 2,
     wx: -25.0,
     wy: 12.0,
-    controlledBy: 'player',
-    settlementName: 'Cartagena', // ⚓ Fixed Reference Point
-    infrastructureNodes: [
+    ctrl: 'player',
+    sett_name: 'Cartagena',
+    infra_nodes: [
       {
         id: 'node_cartagena_port',
         name: 'Contecar Maritime Terminal',
-        category: 'CIVIL_LOGISTICS',
+        cat: 'CIV_LOG',
         tier: 9,
-        capacity: 100,
+        cap: 100,
         state: 'online',
-        maintenance_repair_duration: 0,
-        maintenance_repair_progress: 100
+        maint_dur: 0,
+        maint_prog: 100
       }
     ]
   },
@@ -31,23 +31,23 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     q: -9,
     r: 6,
     terrain: 'port',
-    infrastructure: 8,
+    infra: 8,
     population: 1275854,
     elevation: 18,
     wx: -22.5,
     wy: 10.5,
-    controlledBy: 'player',
-    settlementName: 'Barranquilla',
-    infrastructureNodes: [
+    ctrl: 'player',
+    sett_name: 'Barranquilla',
+    infra_nodes: [
       {
         id: 'node_barranquilla_power',
         name: 'Termobarranquilla Power',
-        category: 'ELECTRIC_GENERATION',
+        cat: 'ELEC_GEN',
         tier: 8,
-        capacity: 100,
+        cap: 100,
         state: 'online',
-        maintenance_repair_duration: 0,
-        maintenance_repair_progress: 100
+        maint_dur: 0,
+        maint_prog: 100
       }
     ]
   },
@@ -56,23 +56,23 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     q: -9,
     r: 7,
     terrain: 'suburban',
-    infrastructure: 6,
+    infra: 6,
     population: 733597,
     elevation: 5,
     wx: -22.5,
     wy: 12.0,
-    controlledBy: 'player',
-    settlementName: 'Soledad',
-    infrastructureNodes: [
+    ctrl: 'player',
+    sett_name: 'Soledad',
+    infra_nodes: [
       {
         id: 'node_soledad_sub',
         name: 'Soledad Substation',
-        category: 'ELECTRIC_DISTRIBUTION',
+        cat: 'ELEC_DIST',
         tier: 6,
-        capacity: 100,
+        cap: 100,
         state: 'online',
-        maintenance_repair_duration: 0,
-        maintenance_repair_progress: 100
+        maint_dur: 0,
+        maint_prog: 100
       }
     ]
   },
@@ -81,23 +81,23 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     q: -6,
     r: 5,
     terrain: 'farmland',
-    infrastructure: 5,
+    infra: 5,
     population: 629217,
     elevation: 168,
     wx: -15.0,
     wy: 9.0,
-    controlledBy: 'player',
-    settlementName: 'Valledupar',
-    infrastructureNodes: [
+    ctrl: 'player',
+    sett_name: 'Valledupar',
+    infra_nodes: [
       {
         id: 'node_valledupar_agri',
         name: 'Cesar Processing Center',
-        category: 'CONSUMER_MANUFACTURING',
+        cat: 'CON_MFG',
         tier: 5,
-        capacity: 100,
+        cap: 100,
         state: 'online',
-        maintenance_repair_duration: 0,
-        maintenance_repair_progress: 100
+        maint_dur: 0,
+        maint_prog: 100
       }
     ]
   },
@@ -106,23 +106,23 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     q: 2,
     r: 4,
     terrain: 'urban',
-    infrastructure: 6,
+    infra: 6,
     population: 792180,
     elevation: 320,
     wx: 5.0,
     wy: 7.0,
-    controlledBy: 'player',
-    settlementName: 'Cúcuta', // 🇻🇪 Aligned near Venezuela border reference
-    infrastructureNodes: [
+    ctrl: 'player',
+    sett_name: 'Cúcuta',
+    infra_nodes: [
       {
         id: 'node_tienditas',
         name: 'Atanasio Girardot Bridge',
-        category: 'TRANSPORTATION',
+        cat: 'TRNSPRT',
         tier: 7,
-        capacity: 100,
+        cap: 100,
         state: 'online',
-        maintenance_repair_duration: 0,
-        maintenance_repair_progress: 100
+        maint_dur: 0,
+        maint_prog: 100
       }
     ]
   },
@@ -131,23 +131,23 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     q: -3,
     r: 1,
     terrain: 'mountainous',
-    infrastructure: 7,
+    infra: 7,
     population: 618548,
     elevation: 959,
     wx: -7.5,
     wy: 2.0,
-    controlledBy: 'player',
-    settlementName: 'Bucaramanga',
-    infrastructureNodes: [
+    ctrl: 'player',
+    sett_name: 'Bucaramanga',
+    infra_nodes: [
       {
         id: 'node_sogamoso',
         name: 'Sogamoso Hydroelectric Dam',
-        category: 'ELECTRIC_GENERATION',
+        cat: 'ELEC_GEN',
         tier: 9,
-        capacity: 100,
+        cap: 100,
         state: 'online',
-        maintenance_repair_duration: 0,
-        maintenance_repair_progress: 100
+        maint_dur: 0,
+        maint_prog: 100
       }
     ]
   },
@@ -156,23 +156,23 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     q: -4,
     r: -1,
     terrain: 'urban',
-    infrastructure: 9,
+    infra: 9,
     population: 2526795,
     elevation: 1495,
     wx: -10.0,
     wy: -1.5,
-    controlledBy: 'player',
-    settlementName: 'Medellin',
-    infrastructureNodes: [
+    ctrl: 'player',
+    sett_name: 'Medellin',
+    infra_nodes: [
       {
         id: 'node_mde_metro',
         name: 'Aburrá Rail Transit',
-        category: 'TRANSPORTATION',
+        cat: 'TRNSPRT',
         tier: 9,
-        capacity: 100,
+        cap: 100,
         state: 'online',
-        maintenance_repair_duration: 0,
-        maintenance_repair_progress: 100
+        maint_dur: 0,
+        maint_prog: 100
       }
     ]
   },
@@ -181,23 +181,23 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     q: 0,
     r: 0,
     terrain: 'urban',
-    infrastructure: 10,
+    infra: 10,
     population: 7945996,
     elevation: 2640,
     wx: 0.0,
     wy: 0.0,
-    controlledBy: 'player',
-    settlementName: 'Bogotá',
-    infrastructureNodes: [
+    ctrl: 'player',
+    sett_name: 'Bogotá',
+    infra_nodes: [
       {
         id: 'node_bogota_guavio',
         name: 'Guavio Hydroelectric',
-        category: 'ELECTRIC_GENERATION',
+        cat: 'ELEC_GEN',
         tier: 10,
-        capacity: 100,
+        cap: 100,
         state: 'online',
-        maintenance_repair_duration: 0,
-        maintenance_repair_progress: 100
+        maint_dur: 0,
+        maint_prog: 100
       }
     ]
   },
@@ -206,23 +206,23 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     q: 0,
     r: -1,
     terrain: 'suburban',
-    infrastructure: 7,
+    infra: 7,
     population: 895878,
     elevation: 2565,
     wx: 0.0,
     wy: -1.5,
-    controlledBy: 'player',
-    settlementName: 'Soacha',
-    infrastructureNodes: [
+    ctrl: 'player',
+    sett_name: 'Soacha',
+    infra_nodes: [
       {
         id: 'node_autopista',
         name: 'Autopista Sur Corridor',
-        category: 'TRANSPORTATION',
+        cat: 'TRNSPRT',
         tier: 7,
-        capacity: 100,
+        cap: 100,
         state: 'online',
-        maintenance_repair_duration: 0,
-        maintenance_repair_progress: 100
+        maint_dur: 0,
+        maint_prog: 100
       }
     ]
   },
@@ -231,23 +231,23 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     q: -3,
     r: -4,
     terrain: 'urban',
-    infrastructure: 8,
+    infra: 8,
     population: 2269983,
     elevation: 1018,
     wx: -7.5,
     wy: -6.0,
-    controlledBy: 'player',
-    settlementName: 'Cali',
-    infrastructureNodes: [
+    ctrl: 'player',
+    sett_name: 'Cali',
+    infra_nodes: [
       {
         id: 'node_cali_sub',
         name: 'San Carlos Substation',
-        category: 'ELECTRIC_DISTRIBUTION',
+        cat: 'ELEC_DIST',
         tier: 8,
-        capacity: 100,
+        cap: 100,
         state: 'online',
-        maintenance_repair_duration: 0,
-        maintenance_repair_progress: 100
+        maint_dur: 0,
+        maint_prog: 100
       }
     ]
   }

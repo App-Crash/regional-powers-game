@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { initializeTheaterScene } from '../../rendering/loadTheaterScene';
 import { type RuntimeHexEntity } from '../../features/home/HexTypes';
-import { AssetDetailsModal } from '../../components/AssetDetailsModal';
+import { HexDetailsModal } from '../../components/HexDetailsModal';
 
 export const ColombiaTheaterView: React.FC = () => {
   const mountRef = useRef<HTMLDivElement>(null);
@@ -23,7 +23,6 @@ export const ColombiaTheaterView: React.FC = () => {
       0.1,
       1000
     );
-    // Position camera overhead angled down toward Colombia coordinates
     camera.position.set(-5, 18, 14);
     camera.lookAt(-5, 0, 3);
 
@@ -44,10 +43,8 @@ export const ColombiaTheaterView: React.FC = () => {
     const theaterGroup = new THREE.Group();
     scene.add(theaterGroup);
 
-    // 4. Initialize Emergent Theater Scene (Colombia 10 Major Hubs)
-    let hexRegistryMap: Record<string, RuntimeHexEntity> = {};
+    // 4. Initialize Emergent Theater Scene
     initializeTheaterScene(theaterGroup).then((registry) => {
-      hexRegistryMap = registry;
       setIsLoaded(true);
       console.log('[ColombiaTheaterView] Theater scene loaded with registry:', registry);
     });
@@ -63,18 +60,24 @@ export const ColombiaTheaterView: React.FC = () => {
 
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObjects(theaterGroup.children, true);
+      console.log('[ColombiaTheaterView] Raycast intersects count:', intersects.length, intersects);
 
       if (intersects.length > 0) {
         let obj: THREE.Object3D | null = intersects[0].object;
-        // Traverse up to find the group holding the runtimeHex data
+        
         while (obj && !obj.userData?.runtimeHex) {
           obj = obj.parent;
         }
 
         if (obj && obj.userData?.runtimeHex) {
           const clickedHex: RuntimeHexEntity = obj.userData.runtimeHex;
+          console.log('[ColombiaTheaterView] Successfully resolved runtimeHex:', clickedHex);
           setSelectedHex(clickedHex);
+        } else {
+          console.warn('[ColombiaTheaterView] Intersected object has no runtimeHex in parent chain:', intersects[0].object);
         }
+      } else {
+        console.warn('[ColombiaTheaterView] No objects intersected by raycaster.');
       }
     };
 
@@ -97,7 +100,6 @@ export const ColombiaTheaterView: React.FC = () => {
     };
     window.addEventListener('resize', handleResize);
 
-    // Cleanup on Unmount
     return () => {
       window.removeEventListener('resize', handleResize);
       renderer.domElement.removeEventListener('click', handleCanvasClick);
@@ -111,19 +113,16 @@ export const ColombiaTheaterView: React.FC = () => {
 
   return (
     <div className="relative w-full h-screen bg-slate-950 overflow-hidden">
-      {/* Three.js Viewport Mount */}
       <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
-      {/* Loading Indicator */}
       {!isLoaded && (
         <div className="absolute top-6 left-6 bg-slate-900/80 border border-slate-700 text-slate-200 px-4 py-2 rounded-lg backdrop-blur text-sm font-mono animate-pulse">
           Initializing Colombia Theater & Emergent Cities...
         </div>
       )}
 
-      {/* Asset Details Modal (Displays when a hex/city is clicked) */}
-      <AssetDetailsModal 
-        hexData={selectedHex} 
+      <HexDetailsModal 
+        selectedHex={selectedHex} 
         onClose={() => setSelectedHex(null)} 
       />
     </div>

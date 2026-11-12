@@ -16,25 +16,25 @@ export type FactionControl = 'player' | 'enemy' | 'neutral' | 'ally' | null;
 
 export type OperationalState = 'online' | 'offline';
 
-export type InfrastructureCategory = 
-  | 'ELECTRIC_GENERATION'
-  | 'ELECTRIC_DISTRIBUTION'
-  | 'WATER_TREATMENT'
-  | 'CIVIL_LOGISTICS'
-  | 'TRANSPORTATION'
-  | 'HEAVY_MANUFACTURING'
-  | 'CONSUMER_MANUFACTURING'
-  | 'COMMUNICATIONS';
+export type InfraCategory = 
+  | 'ELEC_GEN'
+  | 'ELEC_DIST'
+  | 'WAT_TRT'
+  | 'CIV_LOG'
+  | 'TRNSPRT'
+  | 'HVY_MFG'
+  | 'CON_MFG'
+  | 'COMM';
 
-export interface InfrastructureNode {
+export interface InfraNode {
   id: string;
   name: string;
-  category: InfrastructureCategory;
+  cat: InfraCategory;
   tier: number;
-  capacity: number;
+  cap: number;
   state: OperationalState;
-  maintenance_repair_duration: number;
-  maintenance_repair_progress: number;
+  maint_dur: number;
+  maint_prog: number;
 }
 
 export interface HexData {
@@ -42,23 +42,23 @@ export interface HexData {
   q: number;
   r: number;
   terrain: TerrainType;
-  infrastructure: number; // 0 to 9
+  infra: number; // 0 to 9
   population: number;
-  elevation: number;      // in meters
+  elevation: number; // in meters
   wx: number;
   wy: number;
-  controlledBy: FactionControl;
+  ctrl: FactionControl;
+  sett_name: string; // Non-optional canonical field from game API
 }
 
 export interface RuntimeHexEntity extends HexData {
-  settlementName?: string;
-  infrastructureNodes: InfrastructureNode[];
+  infra_nodes: InfraNode[];
 }
 
 export interface SectorRecord {
   terrain: TerrainType;
-  controlledBy: FactionControl;
+  ctrl: FactionControl;
   elevation: number;
-  infrastructure: number;
+  infra: number;
   population: number;
 }

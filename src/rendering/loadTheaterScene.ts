@@ -12,8 +12,13 @@ export async function initializeTheaterScene(sceneGroup: THREE.Group): Promise<R
     theaterHexes.forEach((hex) => {
       loadedHexRegistry[hex.id] = hex;
 
-      const hasManufacturing = hex.infrastructureNodes.some(
-        n => n.category === 'HEAVY_MANUFACTURING' || n.category === 'CONSUMER_MANUFACTURING'
+      // Safe fallback supporting both abbreviated (infra_nodes / cat) and legacy properties
+      const nodes = hex.infra_nodes || (hex as any).infrastructureNodes || [];
+      const hasManufacturing = nodes.some(
+        (n: any) => {
+          const c = n.cat || n.category;
+          return c === 'HVY_MFG' || c === 'CON_MFG' || c === 'HEAVY_MANUFACTURING' || c === 'CONSUMER_MANUFACTURING';
+        }
       );
       
       if (hex.population >= 100000 || hasManufacturing) {
