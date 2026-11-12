@@ -8,6 +8,7 @@ import { TheaterViewport } from './TheaterViewport';
 import { initializeTheaterScene } from '../../rendering/loadTheaterScene';
 import { createBorderTextureOverlay } from '../../rendering/CurvedBorderOverlay';
 import { HexDetailsModal } from '../../components/HexDetailsModal';
+import { stopSectorSound } from './sectorAudio';
 import type { HexData, RuntimeHexEntity } from './HexTypes';
 
 interface CurvedEarthMapProps {
@@ -32,6 +33,7 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
 
   const handleSelectHex = (hex: HexData | RuntimeHexEntity | null) => {
     setSelectedHex(hex);
+    if (!hex) stopSectorSound(); // any deselection (modal close, empty click) stops the sound
     if (onSelectHex) {
       onSelectHex(hex);
     }

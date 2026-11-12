@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { createHexHighlightMesh } from './HexGridLayerDebug';
 import type { HexData, RuntimeHexEntity } from './HexTypes';
+import { playSoundForHex, stopSectorSound } from './sectorAudio';
 
 export function setupHexSelection(
   domElement: HTMLElement,
@@ -83,6 +84,7 @@ export function setupHexSelection(
 
       if (selectedHex) {
         onSelectHex(selectedHex);
+        playSoundForHex(selectedHex);
         
         // Remove previous highlight
         if (currentHighlight) {
@@ -99,6 +101,7 @@ export function setupHexSelection(
     }
 
     onSelectHex(null);
+    stopSectorSound();
     if (currentHighlight) {
       hexGridGroup.remove(currentHighlight);
       currentHighlight = null;
@@ -111,6 +114,7 @@ export function setupHexSelection(
   return () => {
     domElement.removeEventListener('mousedown', onMouseDown);
     domElement.removeEventListener('click', onClick);
+    stopSectorSound();
     if (currentHighlight) {
       hexGridGroup.remove(currentHighlight);
       currentHighlight = null;
