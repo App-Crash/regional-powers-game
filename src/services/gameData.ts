@@ -29,19 +29,19 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
   {
     id: 'hex_barranquilla',
     q: -9,
-    r: 6,
+    r: 8,
     terrain: 'port',
     infra: 8,
-    population: 1275854,
+    population: 2009451, // Combined Barranquilla + Soledad
     elevation: 18,
-    wx: -22.5,
-    wy: 10.5,
+    wx: -22.0,
+    wy: 14.0,
     ctrl: 'player',
-    sett_name: 'Barranquilla',
+    sett_name: 'Barranquilla & Soledad',
     infra_nodes: [
       {
         id: 'node_barranquilla_power',
-        name: 'Termobarranquilla Power',
+        name: 'Termobarranquilla Power & Logistics',
         cat: 'ELEC_GEN',
         tier: 8,
         cap: 100,
@@ -52,40 +52,15 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     ]
   },
   {
-    id: 'hex_soledad',
-    q: -9,
-    r: 7,
-    terrain: 'suburban',
-    infra: 6,
-    population: 733597,
-    elevation: 5,
-    wx: -22.5,
-    wy: 12.0,
-    ctrl: 'player',
-    sett_name: 'Soledad',
-    infra_nodes: [
-      {
-        id: 'node_soledad_sub',
-        name: 'Soledad Substation',
-        cat: 'ELEC_DIST',
-        tier: 6,
-        cap: 100,
-        state: 'online',
-        maint_dur: 0,
-        maint_prog: 100
-      }
-    ]
-  },
-  {
     id: 'hex_valledupar',
     q: -6,
-    r: 5,
+    r: 7,
     terrain: 'farmland',
     infra: 5,
     population: 629217,
     elevation: 168,
-    wx: -15.0,
-    wy: 9.0,
+    wx: -14.5,
+    wy: 12.0,
     ctrl: 'player',
     sett_name: 'Valledupar',
     infra_nodes: [
@@ -102,65 +77,15 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     ]
   },
   {
-    id: 'hex_cucuta',
-    q: 2,
-    r: 4,
-    terrain: 'urban',
-    infra: 6,
-    population: 792180,
-    elevation: 320,
-    wx: 5.0,
-    wy: 7.0,
-    ctrl: 'player',
-    sett_name: 'Cúcuta',
-    infra_nodes: [
-      {
-        id: 'node_tienditas',
-        name: 'Atanasio Girardot Bridge',
-        cat: 'TRNSPRT',
-        tier: 7,
-        cap: 100,
-        state: 'online',
-        maint_dur: 0,
-        maint_prog: 100
-      }
-    ]
-  },
-  {
-    id: 'hex_bucaramanga',
-    q: -3,
-    r: 1,
-    terrain: 'mountainous',
-    infra: 7,
-    population: 618548,
-    elevation: 959,
-    wx: -7.5,
-    wy: 2.0,
-    ctrl: 'player',
-    sett_name: 'Bucaramanga',
-    infra_nodes: [
-      {
-        id: 'node_sogamoso',
-        name: 'Sogamoso Hydroelectric Dam',
-        cat: 'ELEC_GEN',
-        tier: 9,
-        cap: 100,
-        state: 'online',
-        maint_dur: 0,
-        maint_prog: 100
-      }
-    ]
-  },
-  {
     id: 'hex_medellin',
-    q: -4,
-    r: -1,
+    q: -5,
+    r: -2,
     terrain: 'urban',
     infra: 9,
     population: 2526795,
     elevation: 1495,
-    wx: -10.0,
-    wy: -1.5,
+    wx: -9.0,
+    wy: -3.5,
     ctrl: 'player',
     sett_name: 'Medellin',
     infra_nodes: [
@@ -177,17 +102,67 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     ]
   },
   {
+    id: 'hex_bucaramanga',
+    q: -1,
+    r: -1,
+    terrain: 'mountainous',
+    infra: 7,
+    population: 618548,
+    elevation: 959,
+    wx: -1.5,
+    wy: -1.5,
+    ctrl: 'player',
+    sett_name: 'Bucaramanga',
+    infra_nodes: [
+      {
+        id: 'node_sogamoso',
+        name: 'Sogamoso Hydroelectric Dam',
+        cat: 'ELEC_GEN',
+        tier: 9,
+        cap: 100,
+        state: 'online',
+        maint_dur: 0,
+        maint_prog: 100
+      }
+    ]
+  },
+  {
+    id: 'hex_cucuta',
+    q: -2,
+    r: 1,
+    terrain: 'urban',
+    infra: 6,
+    population: 792180,
+    elevation: 320,
+    wx: -1.5,
+    wy: 2.0,
+    ctrl: 'player',
+    sett_name: 'Cúcuta',
+    infra_nodes: [
+      {
+        id: 'node_tienditas',
+        name: 'Atanasio Girardot Bridge',
+        cat: 'TRNSPRT',
+        tier: 7,
+        cap: 100,
+        state: 'online',
+        maint_dur: 0,
+        maint_prog: 100
+      }
+    ]
+  },
+  {
     id: 'hex_bogota',
-    q: 0,
-    r: 0,
+    q: -1,
+    r: -5,
     terrain: 'urban',
     infra: 10,
-    population: 7945996,
+    population: 8841874, // Combined Bogotá (7,945,996) + Soledad (895,878)
     elevation: 2640,
-    wx: 0.0,
-    wy: 0.0,
+    wx: -3.5,
+    wy: -8.5,
     ctrl: 'player',
-    sett_name: 'Bogotá',
+    sett_name: 'Bogota & Soacha',
     infra_nodes: [
       {
         id: 'node_bogota_guavio',
@@ -198,22 +173,7 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
         state: 'online',
         maint_dur: 0,
         maint_prog: 100
-      }
-    ]
-  },
-  {
-    id: 'hex_soacha',
-    q: 0,
-    r: -1,
-    terrain: 'suburban',
-    infra: 7,
-    population: 895878,
-    elevation: 2565,
-    wx: 0.0,
-    wy: -1.5,
-    ctrl: 'player',
-    sett_name: 'Soacha',
-    infra_nodes: [
+      },
       {
         id: 'node_autopista',
         name: 'Autopista Sur Corridor',
@@ -228,14 +188,14 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
   },
   {
     id: 'hex_cali',
-    q: -3,
-    r: -4,
+    q: -4,
+    r: -8,
     terrain: 'urban',
     infra: 8,
     population: 2269983,
     elevation: 1018,
-    wx: -7.5,
-    wy: -6.0,
+    wx: -8.0,
+    wy: -14.0,
     ctrl: 'player',
     sett_name: 'Cali',
     infra_nodes: [
