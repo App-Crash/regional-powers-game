@@ -6,7 +6,7 @@ import { setupHexSelection } from './HexSelectionManager';
 import { getCurvatureHeight, TERRAIN_ROTATION_X } from './CurvedTerrain';
 import { TheaterViewport } from './TheaterViewport';
 import { initializeTheaterScene } from '../../rendering/loadTheaterScene';
-import { createInternationalBordersGroup } from '../../rendering/renderBorders';
+import { createBorderTextureOverlay } from '../../rendering/CurvedBorderOverlay';
 import type { HexData } from './HexTypes';
 import type { RuntimeHexEntity } from './HexTypes';
 
@@ -108,8 +108,8 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
       console.log('[CurvedEarthMap] Colombia theater structures initialized:', Object.keys(registry).length, 'hubs loaded.');
     });
 
-    // 🌐 International Borders Group
-    const bordersGroup = createInternationalBordersGroup();
+    // 🌐 International Borders Texture Overlay Group (Synchronous creation with async texture loading)
+    const bordersGroup = createBorderTextureOverlay('/assets/colombia_border_stencil.png', -4, 9);
     scene.add(bordersGroup);
 
     const { gridGroup, controlGroup } = createHexGridGroup();

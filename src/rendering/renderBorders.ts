@@ -13,46 +13,47 @@ export function createInternationalBordersGroup(): THREE.Group {
     opacity: 0.95,
   });
 
-  // ⚓ 1. Mandated Apex Anchor Hex [-4, 9]
-  // We grab its raw coordinate position directly from the engine.
-  const northernApexHex = getHexCenterPosition(-4, 9);
+  // ⚓ 1. HARD ANCHOR: Retrieve exact world 2D position for Hex [-4, 9]
+  // This is non-negotiable Punta Gallinas / La Guajira apex
+  const apexHexWorld = getHexCenterPosition(-4, 9);
+  const anchorX = apexHexWorld.x;
+  const anchorY = apexHexWorld.y;
 
-  // 🗺️ 2. Boundary Hull Vector sequence anchored relative to northern apex
-  // Traces: Punta Gallinas -> Caribbean Coast -> Panama/Pacific -> Amazon -> Orinoco -> Venezuela -> Return
-  // Using explicit relative offsets (dx, dy) from the apex guarantees the apex is the absolute highest Y vertex.
-  const countryHullOffsets: [number, number][] = [
-    [0, 0],       // ⚓ APEX: Locked at [-4, 9] (Punta Gallinas / Northernmost Tip)
-    [-12, -8],    // Santa Marta / Barranquilla coastal sweep
-    [-25, -18],   // Cartagena & Gulf of Morrosquillo
-    [-38, -30],   // Gulf of Urabá / Panama Border Connection
-    [-42, -45],   // Chocó / Pacific Coast Northern Start
-    [-38, -70],   // Buenaventura / Pacific Coast Central
-    [-32, -95],   // Nariño / Tumaco Southwest Coast
-    [-22, -112],  // Ecuador Border Tripoint (Ipiales sector)
-    [-8, -120],   // Putumayo Amazon Basin Southern Frontier
-    [12, -132],   // Leticia Wedge / Southernmost Amazon Tip
-    [28, -115],   // Brazilian Border / Vaupés Sector
-    [45, -88],    // Mitú / Inírida Eastern Amazonian Bulge
-    [52, -58],    // Puerto Carreño / Orinoco River Eastern Apex
-    [38, -35],    // Arauca / Venezuelan Llanos Frontier
-    [22, -18],    // Cúcuta / Norte de Santander Sector
-    [10, -8],     // Serranía del Perijá / Eastern Guajira Base
-    [0, 0]        // Close Loop precisely back at [-4, 9] Apex
+  // 🗺️ 2. Geographic Offsets (dx, dy) relative to [-4, 9]
+  // Node [0, 0] is strictly the Apex at [-4, 9].
+  // All dy values are negative so NO point can ever sit north of [-4, 9].
+  const perimeterRelativeOffsets: [number, number][] = [
+    [0, 0],         // ⚓ INDEX 0: LOCKED EXACTLY TO [-4, 9] (NORTHERNMOST APEX)
+    [-8, -5],       // Caribbean coast heading toward Santa Marta
+    [-18, -12],     // Barranquilla / Cartagena sector
+    [-28, -22],     // Gulf of Urabá / Panama connection
+    [-32, -32],     // Panama border Pacific drop
+    [-30, -50],     // Northern Chocó Pacific coast
+    [-26, -70],     // Buenaventura / Pacific central
+    [-22, -88],     // Tumaco / Southwest coast
+    [-15, -100],    // Ecuador border junction (Ipiales tripoint)
+    [-4, -108],     // Putumayo Amazon frontier tracking east
+    [10, -118],     // Leticia Amazon tip (Southernmost vertex)
+    [22, -102],     // Brazilian border tracking northeast
+    [35, -80],      // Vaupés / Apaporis river sector
+    [42, -55],      // Easternmost apex (Orinoco River / Vichada)
+    [32, -32],      // Arauca / Venezuela frontier tracking north
+    [18, -16],      // Cúcuta / Norte de Santander
+    [8, -6],        // Guajira eastern neck
+    [0, 0]          // Close loop back precisely at [-4, 9]
   ];
 
   const points: THREE.Vector3[] = [];
 
-  // Determine standard orientation multiplier for vertical curvature
-  // If your grid Y increases northward, dy stays positive; if downward, we adjust scale.
-  countryHullOffsets.forEach(([dx, dy]) => {
-    // Offset directly from the northern apex hex position
-    const worldX = northernApexHex.x + dx;
-    const worldY = northernApexHex.y + dy;
+  perimeterRelativeOffsets.forEach(([dx, dy]) => {
+    // 3. Absolute 2D Position = Anchor World Pos + Offset
+    const worldX = anchorX + dx;
+    const worldY = anchorY + dy;
 
-    // Sample terrain height on flat 2D projection before rotation
+    // 4. Height evaluation at flat 2D point (+0.35 to lift line above terrain tiles)
     const vz = getCurvatureHeight(worldX, worldY) + 0.35;
 
-    // Apply exact terrain curvature pitch rotation
+    // 5. Pitch Transformation matching CurvedTerrain engine
     const rotatedY = worldY * Math.cos(TERRAIN_ROTATION_X) - vz * Math.sin(TERRAIN_ROTATION_X);
     const rotatedZ = worldY * Math.sin(TERRAIN_ROTATION_X) + vz * Math.cos(TERRAIN_ROTATION_X);
 
