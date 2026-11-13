@@ -1,6 +1,6 @@
-import { type RuntimeHexEntity } from '../features/home/HexTypes';
+import { type RuntimeHexEntity } from '../../../features/home/HexTypes';
 
-export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
+export const MOCK_COLOMBIA_THEATER_COL1: RuntimeHexEntity[] = [
   {
     id: 'hex_cartagena',
     q: -10,
@@ -11,7 +11,7 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     elevation: 2,
     wx: -25.0,
     wy: 12.0,
-    ctrl: 'player',
+    fac_ctl: 'col',
     sett_name: 'Cartagena',
     infra_nodes: [
       {
@@ -32,11 +32,11 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     r: 8,
     terrain: 'port',
     infra: 8,
-    population: 2009451, // Combined Barranquilla + Soledad
+    population: 2009451,
     elevation: 18,
     wx: -22.0,
     wy: 14.0,
-    ctrl: 'player',
+    fac_ctl: 'col',
     sett_name: 'Barranquilla & Soledad',
     infra_nodes: [
       {
@@ -61,7 +61,7 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     elevation: 168,
     wx: -14.5,
     wy: 12.0,
-    ctrl: 'player',
+    fac_ctl: 'col',
     sett_name: 'Valledupar',
     infra_nodes: [
       {
@@ -86,7 +86,7 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     elevation: 1495,
     wx: -9.0,
     wy: -3.5,
-    ctrl: 'player',
+    fac_ctl: 'col',
     sett_name: 'Medellin',
     infra_nodes: [
       {
@@ -111,7 +111,7 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     elevation: 959,
     wx: -1.5,
     wy: -1.5,
-    ctrl: 'player',
+    fac_ctl: 'col',
     sett_name: 'Bucaramanga',
     infra_nodes: [
       {
@@ -136,7 +136,7 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     elevation: 320,
     wx: -1.5,
     wy: 2.0,
-    ctrl: 'player',
+    fac_ctl: 'col',
     sett_name: 'Cúcuta',
     infra_nodes: [
       {
@@ -157,11 +157,11 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     r: -5,
     terrain: 'urban',
     infra: 10,
-    population: 8841874, // Combined Bogotá (7,945,996) + Soledad (895,878)
+    population: 8841874,
     elevation: 2640,
     wx: -3.5,
     wy: -8.5,
-    ctrl: 'player',
+    fac_ctl: 'col',
     sett_name: 'Bogota & Soacha',
     infra_nodes: [
       {
@@ -196,7 +196,7 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
     elevation: 1018,
     wx: -8.0,
     wy: -14.0,
-    ctrl: 'player',
+    fac_ctl: 'col',
     sett_name: 'Cali',
     infra_nodes: [
       {

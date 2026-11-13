@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { type RuntimeHexEntity, type InfraNode } from '../features/home/HexTypes';
-import { getHexCenterPosition } from '../features/home/HexGridLayerDebug';
+import { getHexCenterPosition } from '../features/home/HexGridLayer';
 import { alignToSurfaceNormal } from '../features/home/CurvedTerrain';
 
 const HEX_SIZE = 1.3;

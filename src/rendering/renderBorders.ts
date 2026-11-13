@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { getHexCenterPosition } from '../features/home/HexGridLayerDebug';
+import { getHexCenterPosition } from '../features/home/HexGridLayer';
 import { getCurvatureHeight, TERRAIN_ROTATION_X } from '../features/home/CurvedTerrain';
 
 export function createInternationalBordersGroup(): THREE.Group {

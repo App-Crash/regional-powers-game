@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { initScene } from './SceneSetup';
-import { createHexGridGroup } from './HexGridLayerDebug';
+import { createHexGridGroup } from './HexGridLayer';
 import { setupHexSelection } from './HexSelectionManager';
 import { getCurvatureHeight, TERRAIN_ROTATION_X } from './CurvedTerrain';
 import { TheaterViewport } from './TheaterViewport';

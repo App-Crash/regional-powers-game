@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createHexHighlightMesh } from './HexGridLayerDebug';
+import { createHexHighlightMesh } from './HexGridLayer';
 import type { HexData, RuntimeHexEntity } from './HexTypes';
 import { playSoundForHex, stopSectorSound } from './sectorAudio';
 
