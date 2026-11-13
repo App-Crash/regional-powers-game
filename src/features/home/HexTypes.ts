@@ -1,6 +1,18 @@
 export type FactionCode = 'col' | 'ven' | 'ecu' | 'bra' | 'per' | 'pan';
 export type FactionControl = FactionCode;
 
+export type TerrainType = 
+  | 'mountain' 
+  | 'plain' 
+  | 'coastal' 
+  | 'deep water' 
+  | 'hills' 
+  | 'forest' 
+  | 'jungle' 
+  | 'urban'
+  | 'port'
+  | 'marsh';
+
 export interface InfraNode {
   id: string;
   name: string;
@@ -16,14 +28,14 @@ export interface RuntimeHexEntity {
   id: string;
   q: number;
   r: number;
-  terrain: string;
+  terrain: TerrainType;
   infra: number;
   population: number;
   elevation: number;
   wx: number;
   wy: number;
   fac_ctl: FactionCode;
-  sett_name?: string;
+  sett_name: string;
   infra_nodes: InfraNode[];
 }
 

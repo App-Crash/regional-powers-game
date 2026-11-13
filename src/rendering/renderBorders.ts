@@ -10,11 +10,11 @@ export function createInternationalBordersGroup(): THREE.Group {
     color: 0xf59e0b, // Amber border line
     linewidth: 3,
     transparent: true,
-    opacity: 0.95,
+    opacity: 0.68,              // Midpoint material opacity
     depthTest: true,
-    depthWrite: false,          // Eliminates depth buffer z-fighting on orbit
+    depthWrite: false,
     polygonOffset: true,
-    polygonOffsetFactor: -4,    // Pulls line forward relative to underlying hex meshes
+    polygonOffsetFactor: -4,
     polygonOffsetUnits: -8,
   });
 
@@ -64,7 +64,7 @@ export function createInternationalBordersGroup(): THREE.Group {
 
   const geometry = new THREE.BufferGeometry().setFromPoints(points);
   const borderLine = new THREE.Line(geometry, borderMaterial);
-  borderLine.renderOrder = 25; // Ensures borders render last and stay visible on all camera angles
+  borderLine.renderOrder = 25;
   borderGroup.add(borderLine);
 
   return borderGroup;

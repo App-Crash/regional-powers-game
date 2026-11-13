@@ -75,11 +75,11 @@ export function createBorderTextureOverlay(
   });
 
   const borderMesh = new THREE.Mesh(geometry, initialMaterial);
-  borderMesh.renderOrder = 20; // Ensure overlay renders after base terrain and hex tiles
+  borderMesh.renderOrder = 20;
   borderMesh.frustumCulled = false;
   borderGroup.add(borderMesh);
 
-  // 3. Process texture: High transparency alpha cap for ghost terminal aesthetic
+  // 3. Process texture: Midpoint alpha cap for balanced visibility
   const img = new Image();
   img.crossOrigin = 'Anonymous';
   img.src = textureUrl;
@@ -111,8 +111,8 @@ export function createBorderTextureOverlay(
         data[j + 1] = 158; // G
         data[j + 2] = 11;  // B
         
-        // Capped at max alpha 65 for enhanced visibility without visual clutter
-        data[j + 3] = Math.min(originalAlpha, 65);
+        // Midpoint alpha cap set to 50
+        data[j + 3] = Math.min(originalAlpha, 50);
       }
     }
 
@@ -123,11 +123,11 @@ export function createBorderTextureOverlay(
     borderMesh.material = new THREE.MeshBasicMaterial({
       map: texture,
       transparent: true,
-      opacity: 0.90,
+      opacity: 0.65,              // Midpoint material opacity
       depthTest: true,
-      depthWrite: false,          // Prevents z-fighting against terrain
+      depthWrite: false,
       polygonOffset: true,
-      polygonOffsetFactor: -4,    // Pulls overlay visually closer to camera
+      polygonOffsetFactor: -4,
       polygonOffsetUnits: -8,
       side: THREE.DoubleSide,
     });

@@ -55,7 +55,7 @@ export const MOCK_COLOMBIA_THEATER_COL1: RuntimeHexEntity[] = [
     id: 'hex_valledupar',
     q: -6,
     r: 7,
-    terrain: 'farmland',
+    terrain: 'urban',
     infra: 5,
     population: 629217,
     elevation: 168,
@@ -105,7 +105,7 @@ export const MOCK_COLOMBIA_THEATER_COL1: RuntimeHexEntity[] = [
     id: 'hex_bucaramanga',
     q: -1,
     r: -1,
-    terrain: 'mountainous',
+    terrain: 'mountain',
     infra: 7,
     population: 618548,
     elevation: 959,
@@ -210,5 +210,33 @@ export const MOCK_COLOMBIA_THEATER_COL1: RuntimeHexEntity[] = [
         maint_prog: 100
       }
     ]
+  },
+  {
+    id: 'col-m-82',
+    q: -8,
+    r: -2,
+    terrain: 'mountain',
+    infra: 1,
+    population: 9500,
+    elevation: 2150,
+    wx: -11.0,
+    wy: -6.0,
+    fac_ctl: 'col',
+    sett_name: 'Antioquia Western Slopes',
+    infra_nodes: []
+  },
+  {
+    id: 'col-m-83',
+    q: -8,
+    r: -1,
+    terrain: 'mountain',
+    infra: 1,
+    population: 11200,
+    elevation: 2300,
+    wx: -10.5,
+    wy: -5.0,
+    fac_ctl: 'col',
+    sett_name: 'Cañasgordas Ridge',
+    infra_nodes: []
   }
 ];

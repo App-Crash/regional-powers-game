@@ -76,6 +76,20 @@ export const MOCK_COLOMBIA_THEATER_COL5: RuntimeHexEntity[] = [
     infra_nodes: []
   },
   {
+    id: 'col-m-44',
+    q: -7,
+    r: -5,
+    terrain: 'mountain',
+    infra: 1,
+    population: 18400,
+    elevation: 2100,
+    wx: 0,
+    wy: 0,
+    fac_ctl: 'col',
+    sett_name: 'Buenaventura-Cali Mountain Corridor',
+    infra_nodes: []
+  },
+  {
     id: 'col-m-36',
     q: -6,
     r: -3,
@@ -89,6 +103,50 @@ export const MOCK_COLOMBIA_THEATER_COL5: RuntimeHexEntity[] = [
     sett_name: 'Tuluá Foothills',
     infra_nodes: [
       { id: 'node-m36-1', name: 'Valle Supply Post', cat: 'LOGISTICS', tier: 2, cap: 120, state: 'online', maint_dur: 15, maint_prog: 0 }
+    ]
+  },
+  {
+    id: 'col-m-41',
+    q: -6,
+    r: -4,
+    terrain: 'mountain',
+    infra: 1,
+    population: 19200,
+    elevation: 1950,
+    wx: 0,
+    wy: 0,
+    fac_ctl: 'col',
+    sett_name: 'Buga Central Ridge',
+    infra_nodes: []
+  },
+  {
+    id: 'col-m-42',
+    q: -6,
+    r: -5,
+    terrain: 'mountain',
+    infra: 1,
+    population: 21500,
+    elevation: 2020,
+    wx: 0,
+    wy: 0,
+    fac_ctl: 'col',
+    sett_name: 'Palmira Andean Approach',
+    infra_nodes: []
+  },
+  {
+    id: 'col-m-43',
+    q: -6,
+    r: -6,
+    terrain: 'mountain',
+    infra: 1,
+    population: 24100,
+    elevation: 2180,
+    wx: 0,
+    wy: 0,
+    fac_ctl: 'col',
+    sett_name: 'Cali Northern Bastion',
+    infra_nodes: [
+      { id: 'node-m43-1', name: 'Cauca Valley Gateway', cat: 'COMMS', tier: 1, cap: 65, state: 'online', maint_dur: 10, maint_prog: 0 }
     ]
   },
   {
