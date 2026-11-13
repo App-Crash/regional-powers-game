@@ -38,8 +38,8 @@ export function createBorderTextureOverlay(
     const worldX = apexPos.x + localX + offsetX;
     const worldY = apexPos.y + localY + offsetY;
 
-    // ⚖️ Lowered slightly to +0.08 for a tighter fit against the terrain mesh
-    const vz = getCurvatureHeight(worldX, worldY) + 0.08;
+    // ⚖️ Raised slightly to +0.25 to prevent z-fighting with hex control meshes
+    const vz = getCurvatureHeight(worldX, worldY) + 0.25;
 
     const rotatedY = worldY * Math.cos(rotX) - vz * Math.sin(rotX);
     const rotatedZ = worldY * Math.sin(rotX) + vz * Math.cos(rotX);
@@ -56,24 +56,26 @@ export function createBorderTextureOverlay(
   
   geometry.computeVertexNormals();
 
-  // 🛡️ Force a massive bounding sphere and box centered at the world apex 
-  // so Three.js camera frustum culling never clips or drops mesh segments during orbit.
+  // 🛡️ Force bounding sphere and box centered at the world apex 
   geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(apexPos.x, apexPos.y, 0), 200);
   geometry.boundingBox = new THREE.Box3(
     new THREE.Vector3(apexPos.x - 150, apexPos.y - 150, -50),
     new THREE.Vector3(apexPos.x + 150, apexPos.y + 150, 50)
   );
 
-  const material = new THREE.MeshBasicMaterial({
+  const initialMaterial = new THREE.MeshBasicMaterial({
     transparent: true,
     opacity: 0.0,
     side: THREE.DoubleSide,
+    depthTest: true,
     depthWrite: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -4,
+    polygonOffsetUnits: -8,
   });
 
-  const borderMesh = new THREE.Mesh(geometry, material);
-  
-  // Double protection against frustum culling
+  const borderMesh = new THREE.Mesh(geometry, initialMaterial);
+  borderMesh.renderOrder = 20; // Ensure overlay renders after base terrain and hex tiles
   borderMesh.frustumCulled = false;
   borderGroup.add(borderMesh);
 
@@ -105,12 +107,12 @@ export function createBorderTextureOverlay(
         data[j + 3] = 0; 
       } else {
         // Tint border lines to WOPR Amber (#f59e0b)
-        data[j] = 245;     // R
+        data[j] = 245;    // R
         data[j + 1] = 158; // G
         data[j + 2] = 11;  // B
         
-        // Capped at max alpha 50 for a subtle, see-through radar/terminal glow
-        data[j + 3] = Math.min(originalAlpha, 50);
+        // Capped at max alpha 65 for enhanced visibility without visual clutter
+        data[j + 3] = Math.min(originalAlpha, 65);
       }
     }
 
@@ -121,11 +123,15 @@ export function createBorderTextureOverlay(
     borderMesh.material = new THREE.MeshBasicMaterial({
       map: texture,
       transparent: true,
-      opacity: 0.85,
+      opacity: 0.90,
       depthTest: true,
-      depthWrite: false,
+      depthWrite: false,          // Prevents z-fighting against terrain
+      polygonOffset: true,
+      polygonOffsetFactor: -4,    // Pulls overlay visually closer to camera
+      polygonOffsetUnits: -8,
       side: THREE.DoubleSide,
     });
+    borderMesh.renderOrder = 20;
     borderMesh.material.needsUpdate = true;
   };
 

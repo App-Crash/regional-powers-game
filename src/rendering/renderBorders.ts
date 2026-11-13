@@ -11,17 +11,19 @@ export function createInternationalBordersGroup(): THREE.Group {
     linewidth: 3,
     transparent: true,
     opacity: 0.95,
+    depthTest: true,
+    depthWrite: false,          // Eliminates depth buffer z-fighting on orbit
+    polygonOffset: true,
+    polygonOffsetFactor: -4,    // Pulls line forward relative to underlying hex meshes
+    polygonOffsetUnits: -8,
   });
 
   // ⚓ 1. HARD ANCHOR: Retrieve exact world 2D position for Hex [-4, 9]
-  // This is non-negotiable Punta Gallinas / La Guajira apex
   const apexHexWorld = getHexCenterPosition(-4, 9);
   const anchorX = apexHexWorld.x;
   const anchorY = apexHexWorld.y;
 
   // 🗺️ 2. Geographic Offsets (dx, dy) relative to [-4, 9]
-  // Node [0, 0] is strictly the Apex at [-4, 9].
-  // All dy values are negative so NO point can ever sit north of [-4, 9].
   const perimeterRelativeOffsets: [number, number][] = [
     [0, 0],         // ⚓ INDEX 0: LOCKED EXACTLY TO [-4, 9] (NORTHERNMOST APEX)
     [-8, -5],       // Caribbean coast heading toward Santa Marta
@@ -50,8 +52,8 @@ export function createInternationalBordersGroup(): THREE.Group {
     const worldX = anchorX + dx;
     const worldY = anchorY + dy;
 
-    // 4. Height evaluation at flat 2D point (+0.35 to lift line above terrain tiles)
-    const vz = getCurvatureHeight(worldX, worldY) + 0.35;
+    // 4. Height evaluation at flat 2D point (+0.40 to safely clear terrain and hex control borders)
+    const vz = getCurvatureHeight(worldX, worldY) + 0.40;
 
     // 5. Pitch Transformation matching CurvedTerrain engine
     const rotatedY = worldY * Math.cos(TERRAIN_ROTATION_X) - vz * Math.sin(TERRAIN_ROTATION_X);
@@ -62,6 +64,7 @@ export function createInternationalBordersGroup(): THREE.Group {
 
   const geometry = new THREE.BufferGeometry().setFromPoints(points);
   const borderLine = new THREE.Line(geometry, borderMaterial);
+  borderLine.renderOrder = 25; // Ensures borders render last and stay visible on all camera angles
   borderGroup.add(borderLine);
 
   return borderGroup;
