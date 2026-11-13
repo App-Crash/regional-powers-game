@@ -1,0 +1,186 @@
+import { type RuntimeHexEntity } from '../../../features/home/HexTypes';
+
+export const MOCK_COLOMBIA_THEATER_COL17: RuntimeHexEntity[] = [
+  // --- Original Hexes ---
+  {
+    id: 'col-17-1',
+    q: -3,
+    r: -10,
+    terrain: 'jungle',
+    infra: 1,
+    population: 9400,
+    elevation: 90,
+    wx: -3.5,
+    wy: -15.5,
+    fac_ctl: 'col',
+    sett_name: 'Puerto Santander Amazon Sector',
+    infra_nodes: []
+  },
+  {
+    id: 'col-17-2',
+    q: -4,
+    r: -10,
+    terrain: 'jungle',
+    infra: 1,
+    population: 8100,
+    elevation: 95,
+    wx: -5.0,
+    wy: -15.5,
+    fac_ctl: 'col',
+    sett_name: 'Caquetá River Lower Basin',
+    infra_nodes: []
+  },
+  {
+    id: 'col-17-3',
+    q: -2,
+    r: -10,
+    terrain: 'jungle',
+    infra: 1,
+    population: 11200,
+    elevation: 85,
+    wx: -2.0,
+    wy: -15.5,
+    fac_ctl: 'col',
+    sett_name: 'La Pedrera Frontier',
+    infra_nodes: [
+      {
+        id: 'node-col17-3',
+        name: 'La Pedrera River Outpost',
+        cat: 'COMMS',
+        tier: 1,
+        cap: 45,
+        state: 'online',
+        maint_dur: 8,
+        maint_prog: 0
+      }
+    ]
+  },
+  {
+    id: 'col-17-4',
+    q: -3,
+    r: -11,
+    terrain: 'jungle',
+    infra: 1,
+    population: 6800,
+    elevation: 80,
+    wx: -3.5,
+    wy: -17.0,
+    fac_ctl: 'col',
+    sett_name: 'Mirití-Paraná Basin',
+    infra_nodes: []
+  },
+  {
+    id: 'col-17-5',
+    q: -2,
+    r: -11,
+    terrain: 'jungle',
+    infra: 1,
+    population: 7500,
+    elevation: 82,
+    wx: -2.0,
+    wy: -17.0,
+    fac_ctl: 'col',
+    sett_name: 'Amazonas Interior North',
+    infra_nodes: []
+  },
+
+  // --- Newly Added Clustered Hexes ---
+  {
+    id: 'col-17-6',
+    q: -4,
+    r: -11,
+    terrain: 'jungle',
+    infra: 1,
+    population: 6200,
+    elevation: 78,
+    wx: -5.0,
+    wy: -17.0,
+    fac_ctl: 'col',
+    sett_name: 'Lower Caquetá Forest',
+    infra_nodes: []
+  },
+  {
+    id: 'col-17-7',
+    q: -3,
+    r: -12,
+    terrain: 'jungle',
+    infra: 1,
+    population: 5400,
+    elevation: 75,
+    wx: -3.5,
+    wy: -18.5,
+    fac_ctl: 'col',
+    sett_name: 'Apaporis-Amazonas Confluence Sector',
+    infra_nodes: []
+  },
+  {
+    id: 'col-17-8',
+    q: -2,
+    r: -12,
+    terrain: 'jungle',
+    infra: 1,
+    population: 6900,
+    elevation: 76,
+    wx: -2.0,
+    wy: -18.5,
+    fac_ctl: 'col',
+    sett_name: 'Putumayo-Amazonas Border Transition',
+    infra_nodes: []
+  },
+  {
+    id: 'col-17-9',
+    q: -4,
+    r: -9,
+    terrain: 'jungle',
+    infra: 1,
+    population: 8800,
+    elevation: 100,
+    wx: -5.0,
+    wy: -14.0,
+    fac_ctl: 'col',
+    sett_name: 'Caquetá Mid-Stream Jungle',
+    infra_nodes: []
+  },
+  {
+    id: 'col-17-10',
+    q: -3,
+    r: -9,
+    terrain: 'jungle',
+    infra: 1,
+    population: 9100,
+    elevation: 98,
+    wx: -3.5,
+    wy: -14.0,
+    fac_ctl: 'col',
+    sett_name: 'Cahuinarí National Park Sector',
+    infra_nodes: []
+  },
+  {
+    id: 'col-17-11',
+    q: -2,
+    r: -9,
+    terrain: 'jungle',
+    infra: 1,
+    population: 7800,
+    elevation: 92,
+    wx: -2.0,
+    wy: -14.0,
+    fac_ctl: 'col',
+    sett_name: 'Putumayo Lower Valley',
+    infra_nodes: []
+  },
+  {
+    id: 'col-17-12',
+    q: -5,
+    r: -10,
+    terrain: 'jungle',
+    infra: 1,
+    population: 7100,
+    elevation: 102,
+    wx: -6.5,
+    wy: -15.5,
+    fac_ctl: 'col',
+    sett_name: 'Caquetá Western Forest Fringe',
+    infra_nodes: []
+  }
+];

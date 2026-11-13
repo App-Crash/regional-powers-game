@@ -1,0 +1,186 @@
+import { type RuntimeHexEntity } from '../../../features/home/HexTypes';
+
+export const MOCK_COLOMBIA_THEATER_COL19: RuntimeHexEntity[] = [
+  // --- Original Hexes ---
+  {
+    id: 'col-19-1',
+    q: -4,
+    r: -8,
+    terrain: 'jungle',
+    infra: 1,
+    population: 13500,
+    elevation: 210,
+    wx: -5.0,
+    wy: -12.5,
+    fac_ctl: 'col',
+    sett_name: 'Caquetá East Interior',
+    infra_nodes: [
+      {
+        id: 'node-col19-1',
+        name: 'Caquetá River Outpost',
+        cat: 'COMMS',
+        tier: 1,
+        cap: 45,
+        state: 'online',
+        maint_dur: 8,
+        maint_prog: 0
+      }
+    ]
+  },
+  {
+    id: 'col-19-2',
+    q: -3,
+    r: -8,
+    terrain: 'jungle',
+    infra: 1,
+    population: 11200,
+    elevation: 180,
+    wx: -3.5,
+    wy: -12.5,
+    fac_ctl: 'col',
+    sett_name: 'Apaporis-Caquetá Watershed East',
+    infra_nodes: []
+  },
+  {
+    id: 'col-19-3',
+    q: -4,
+    r: -7,
+    terrain: 'forest',
+    infra: 1,
+    population: 15400,
+    elevation: 240,
+    wx: -5.0,
+    wy: -11.0,
+    fac_ctl: 'col',
+    sett_name: 'Solano Transition Sector',
+    infra_nodes: []
+  },
+  {
+    id: 'col-19-4',
+    q: -3,
+    r: -7,
+    terrain: 'jungle',
+    infra: 1,
+    population: 9800,
+    elevation: 195,
+    wx: -3.5,
+    wy: -11.0,
+    fac_ctl: 'col',
+    sett_name: 'Lower Apaporis Forest',
+    infra_nodes: []
+  },
+  {
+    id: 'col-19-5',
+    q: -3,
+    r: -6,
+    terrain: 'jungle',
+    infra: 1,
+    population: 10600,
+    elevation: 215,
+    wx: -3.5,
+    wy: -9.5,
+    fac_ctl: 'col',
+    sett_name: 'Vaupés-Caquetá Border Interior',
+    infra_nodes: []
+  },
+  {
+    id: 'col-19-6',
+    q: -2,
+    r: -7,
+    terrain: 'jungle',
+    infra: 1,
+    population: 8400,
+    elevation: 170,
+    wx: -2.0,
+    wy: -11.0,
+    fac_ctl: 'col',
+    sett_name: 'Amazonas-Vaupés Border East',
+    infra_nodes: []
+  },
+  {
+    id: 'col-19-7',
+    q: -2,
+    r: -8,
+    terrain: 'jungle',
+    infra: 1,
+    population: 7900,
+    elevation: 155,
+    wx: -2.0,
+    wy: -12.5,
+    fac_ctl: 'col',
+    sett_name: 'Putumayo-Amazonas Upper Basin',
+    infra_nodes: []
+  },
+
+  // --- Newly Added Eastern Hexes ---
+  {
+    id: 'col-19-8',
+    q: -1,
+    r: -8,
+    terrain: 'jungle',
+    infra: 1,
+    population: 6800,
+    elevation: 140,
+    wx: -0.5,
+    wy: -12.5,
+    fac_ctl: 'col',
+    sett_name: 'Amazonas Deep Interior West',
+    infra_nodes: []
+  },
+  {
+    id: 'col-19-9',
+    q: -1,
+    r: -7,
+    terrain: 'jungle',
+    infra: 1,
+    population: 7200,
+    elevation: 145,
+    wx: -0.5,
+    wy: -11.0,
+    fac_ctl: 'col',
+    sett_name: 'Putumayo-Amazonas Interfluve East',
+    infra_nodes: []
+  },
+  {
+    id: 'col-19-10',
+    q: -2,
+    r: -6,
+    terrain: 'jungle',
+    infra: 1,
+    population: 8900,
+    elevation: 160,
+    wx: -2.0,
+    wy: -9.5,
+    fac_ctl: 'col',
+    sett_name: 'Apaporis Lower East Basin',
+    infra_nodes: []
+  },
+  {
+    id: 'col-19-11',
+    q: -1,
+    r: -6,
+    terrain: 'jungle',
+    infra: 1,
+    population: 6100,
+    elevation: 135,
+    wx: -0.5,
+    wy: -9.5,
+    fac_ctl: 'col',
+    sett_name: 'Tarapacá North Sector',
+    infra_nodes: []
+  },
+  {
+    id: 'col-19-12',
+    q: -2,
+    r: -5,
+    terrain: 'jungle',
+    infra: 1,
+    population: 9400,
+    elevation: 175,
+    wx: -2.0,
+    wy: -8.0,
+    fac_ctl: 'col',
+    sett_name: 'Vaupés Southern Frontier',
+    infra_nodes: []
+  }
+];
