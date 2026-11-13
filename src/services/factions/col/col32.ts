@@ -1,0 +1,186 @@
+import { type RuntimeHexEntity } from '../../../features/home/HexTypes';
+
+export const MOCK_COLOMBIA_THEATER_COL32: RuntimeHexEntity[] = [
+  // --- Existing ---
+  {
+    id: 'col-32-1',
+    q: 0,
+    r: -6,
+    terrain: 'jungle',
+    infra: 2,
+    population: 16500,
+    elevation: 195,
+    wx: 1.0,
+    wy: -9.5,
+    fac_ctl: 'col',
+    sett_name: 'Pacóa Apaporis Hub',
+    infra_nodes: [
+      {
+        id: 'node-col32-1',
+        name: 'Apaporis Riverine Transit Post',
+        cat: 'TRNSPRT',
+        tier: 2,
+        cap: 65,
+        state: 'online',
+        maint_dur: 10,
+        maint_prog: 0
+      }
+    ]
+  },
+  {
+    id: 'col-32-2',
+    q: 1,
+    r: -6,
+    terrain: 'jungle',
+    infra: 1,
+    population: 10200,
+    elevation: 180,
+    wx: 2.5,
+    wy: -9.5,
+    fac_ctl: 'col',
+    sett_name: 'Cananarí River Basin',
+    infra_nodes: []
+  },
+  {
+    id: 'col-32-3',
+    q: 2,
+    r: -6,
+    terrain: 'jungle',
+    infra: 1,
+    population: 8700,
+    elevation: 170,
+    wx: 4.0,
+    wy: -9.5,
+    fac_ctl: 'col',
+    sett_name: 'Pira Paraná Corridor',
+    infra_nodes: []
+  },
+  {
+    id: 'col-32-4',
+    q: 1,
+    r: -7,
+    terrain: 'jungle',
+    infra: 1,
+    population: 7900,
+    elevation: 175,
+    wx: 2.5,
+    wy: -11.0,
+    fac_ctl: 'col',
+    sett_name: 'Lower Apaporis Jungle',
+    infra_nodes: []
+  },
+  {
+    id: 'col-32-5',
+    q: 2,
+    r: -7,
+    terrain: 'forest',
+    infra: 1,
+    population: 7400,
+    elevation: 165,
+    wx: 4.0,
+    wy: -11.0,
+    fac_ctl: 'col',
+    sett_name: 'Taraira North Approach',
+    infra_nodes: []
+  },
+  {
+    id: 'col-32-6',
+    q: 2,
+    r: -8,
+    terrain: 'jungle',
+    infra: 1,
+    population: 8300,
+    elevation: 160,
+    wx: 4.0,
+    wy: -12.5,
+    fac_ctl: 'col',
+    sett_name: 'Taraira Border Outpost',
+    infra_nodes: []
+  },
+  {
+    id: 'col-32-7',
+    q: 1,
+    r: -8,
+    terrain: 'marsh',
+    infra: 1,
+    population: 6800,
+    elevation: 155,
+    wx: 2.5,
+    wy: -12.5,
+    fac_ctl: 'col',
+    sett_name: 'Mirití Paraná Wetlands',
+    infra_nodes: []
+  },
+
+  // --- 5 New Appended Hexes ---
+  {
+    id: 'col-32-8',
+    q: 0,
+    r: -5,
+    terrain: 'forest',
+    infra: 1,
+    population: 11900,
+    elevation: 205,
+    wx: 1.0,
+    wy: -8.0,
+    fac_ctl: 'col',
+    sett_name: 'Vaupés South Interior',
+    infra_nodes: []
+  },
+  {
+    id: 'col-32-9',
+    q: 1,
+    r: -5,
+    terrain: 'jungle',
+    infra: 1,
+    population: 9400,
+    elevation: 185,
+    wx: 2.5,
+    wy: -8.0,
+    fac_ctl: 'col',
+    sett_name: 'Mitú Southeast Sector',
+    infra_nodes: []
+  },
+  {
+    id: 'col-32-10',
+    q: 2,
+    r: -5,
+    terrain: 'jungle',
+    infra: 1,
+    population: 8100,
+    elevation: 175,
+    wx: 4.0,
+    wy: -8.0,
+    fac_ctl: 'col',
+    sett_name: 'Yavaraté West Approach',
+    infra_nodes: []
+  },
+  {
+    id: 'col-32-11',
+    q: -1,
+    r: -5,
+    terrain: 'forest',
+    infra: 1,
+    population: 13200,
+    elevation: 215,
+    wx: -0.5,
+    wy: -8.0,
+    fac_ctl: 'col',
+    sett_name: 'Apaporis Headwaters North',
+    infra_nodes: []
+  },
+  {
+    id: 'col-32-12',
+    q: 0,
+    r: -7,
+    terrain: 'jungle',
+    infra: 1,
+    population: 8800,
+    elevation: 190,
+    wx: 1.0,
+    wy: -11.0,
+    fac_ctl: 'col',
+    sett_name: 'Pacóa Lower Basin',
+    infra_nodes: []
+  }
+];

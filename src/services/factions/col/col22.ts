@@ -1,0 +1,186 @@
+import { type RuntimeHexEntity } from '../../../features/home/HexTypes';
+
+export const MOCK_COLOMBIA_THEATER_COL22: RuntimeHexEntity[] = [
+  // --- Existing Cluster ---
+  {
+    id: 'col-22-1',
+    q: -3,
+    r: -4,
+    terrain: 'forest',
+    infra: 1,
+    population: 11400,
+    elevation: 230,
+    wx: -3.5,
+    wy: -6.5,
+    fac_ctl: 'col',
+    sett_name: 'Calamar North Forest',
+    infra_nodes: []
+  },
+  {
+    id: 'col-22-2',
+    q: -2,
+    r: -3,
+    terrain: 'plain',
+    infra: 2,
+    population: 22500,
+    elevation: 210,
+    wx: -2.0,
+    wy: -5.0,
+    fac_ctl: 'col',
+    sett_name: 'San José del Guaviare Hub',
+    infra_nodes: [
+      {
+        id: 'node-col22-2',
+        name: 'Guaviare Overland Supply Depot',
+        cat: 'CIV_LOG',
+        tier: 2,
+        cap: 65,
+        state: 'online',
+        maint_dur: 8,
+        maint_prog: 0
+      }
+    ]
+  },
+  {
+    id: 'col-22-3',
+    q: -1,
+    r: -2,
+    terrain: 'plain',
+    infra: 1,
+    population: 9800,
+    elevation: 195,
+    wx: -0.5,
+    wy: -3.5,
+    fac_ctl: 'col',
+    sett_name: 'Mapiripán South Plains',
+    infra_nodes: []
+  },
+  {
+    id: 'col-22-4',
+    q: -2,
+    r: -2,
+    terrain: 'marsh',
+    infra: 1,
+    population: 6700,
+    elevation: 185,
+    wx: -2.0,
+    wy: -3.5,
+    fac_ctl: 'col',
+    sett_name: 'Guaviare River Wetlands',
+    infra_nodes: []
+  },
+  {
+    id: 'col-22-5',
+    q: -3,
+    r: -3,
+    terrain: 'forest',
+    infra: 1,
+    population: 12900,
+    elevation: 225,
+    wx: -3.5,
+    wy: -5.0,
+    fac_ctl: 'col',
+    sett_name: 'El Retorno Interior',
+    infra_nodes: []
+  },
+  {
+    id: 'col-22-6',
+    q: -3,
+    r: -2,
+    terrain: 'plain',
+    infra: 1,
+    population: 10500,
+    elevation: 220,
+    wx: -3.5,
+    wy: -3.5,
+    fac_ctl: 'col',
+    sett_name: 'Puerto Concordia Sector',
+    infra_nodes: []
+  },
+  {
+    id: 'col-22-7',
+    q: -1,
+    r: -1,
+    terrain: 'plain',
+    infra: 1,
+    population: 8900,
+    elevation: 175,
+    wx: -0.5,
+    wy: -2.0,
+    fac_ctl: 'col',
+    sett_name: 'Mapiripán Eastern Savanna',
+    infra_nodes: []
+  },
+
+  // --- Newly Appended Adjacent Hexes (5) ---
+  {
+    id: 'col-22-8',
+    q: -2,
+    r: -4,
+    terrain: 'forest',
+    infra: 1,
+    population: 9300,
+    elevation: 205,
+    wx: -2.0,
+    wy: -6.5,
+    fac_ctl: 'col',
+    sett_name: 'Miraflores North Forest',
+    infra_nodes: []
+  },
+  {
+    id: 'col-22-9',
+    q: -3,
+    r: -5,
+    terrain: 'jungle',
+    infra: 1,
+    population: 7400,
+    elevation: 215,
+    wx: -3.5,
+    wy: -8.0,
+    fac_ctl: 'col',
+    sett_name: 'Calamar Southern Jungle',
+    infra_nodes: []
+  },
+  {
+    id: 'col-22-10',
+    q: -2,
+    r: -5,
+    terrain: 'jungle',
+    infra: 1,
+    population: 8100,
+    elevation: 200,
+    wx: -2.0,
+    wy: -8.0,
+    fac_ctl: 'col',
+    sett_name: 'Itilla River Basin',
+    infra_nodes: []
+  },
+  {
+    id: 'col-22-11',
+    q: -4,
+    r: -2,
+    terrain: 'plain',
+    infra: 1,
+    population: 11200,
+    elevation: 245,
+    wx: -5.0,
+    wy: -3.5,
+    fac_ctl: 'col',
+    sett_name: 'Macarena Eastern Foothills',
+    infra_nodes: []
+  },
+  {
+    id: 'col-22-12',
+    q: -4,
+    r: -1,
+    terrain: 'hills',
+    infra: 1,
+    population: 12400,
+    elevation: 290,
+    wx: -5.0,
+    wy: -2.0,
+    fac_ctl: 'col',
+    sett_name: 'Serranía de la Macarena South',
+    infra_nodes: []
+  }
+];

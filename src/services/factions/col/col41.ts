@@ -1,0 +1,186 @@
+import { type RuntimeHexEntity } from '../../../features/home/HexTypes';
+
+export const MOCK_COLOMBIA_THEATER_COL41: RuntimeHexEntity[] = [
+  // --- Anchor: (8, -6) & 1-level ring ---
+  {
+    id: 'col-41-1',
+    q: 8,
+    r: -6,
+    terrain: 'jungle',
+    infra: 2,
+    population: 22000,
+    elevation: 130,
+    wx: 13.0,
+    wy: -9.5,
+    fac_ctl: 'col',
+    sett_name: 'Rio Negro Eastern Hub Gamma',
+    infra_nodes: [
+      {
+        id: 'node-col41-1',
+        name: 'Rio Negro Frontier Bastion',
+        cat: 'TRNSPRT',
+        tier: 2,
+        cap: 80,
+        state: 'online',
+        maint_dur: 10,
+        maint_prog: 0
+      }
+    ]
+  },
+  {
+    id: 'col-41-2',
+    q: 7,
+    r: -6,
+    terrain: 'forest',
+    infra: 1,
+    population: 15400,
+    elevation: 138,
+    wx: 11.5,
+    wy: -9.5,
+    fac_ctl: 'col',
+    sett_name: 'Rio Negro West Sector',
+    infra_nodes: []
+  },
+  {
+    id: 'col-41-3',
+    q: 9,
+    r: -6,
+    terrain: 'marsh',
+    infra: 1,
+    population: 9800,
+    elevation: 115,
+    wx: 14.5,
+    wy: -9.5,
+    fac_ctl: 'col',
+    sett_name: 'Rio Negro East Wetlands',
+    infra_nodes: []
+  },
+  {
+    id: 'col-41-4',
+    q: 8,
+    r: -5,
+    terrain: 'forest',
+    infra: 1,
+    population: 16900,
+    elevation: 135,
+    wx: 13.0,
+    wy: -8.0,
+    fac_ctl: 'col',
+    sett_name: 'Guainía Southeast Upper',
+    infra_nodes: []
+  },
+  {
+    id: 'col-41-5',
+    q: 8,
+    r: -7,
+    terrain: 'jungle',
+    infra: 1,
+    population: 13200,
+    elevation: 125,
+    wx: 13.0,
+    wy: -11.0,
+    fac_ctl: 'col',
+    sett_name: 'Rio Negro Lower Sector',
+    infra_nodes: []
+  },
+  {
+    id: 'col-41-6',
+    q: 7,
+    r: -7,
+    terrain: 'jungle',
+    infra: 1,
+    population: 14100,
+    elevation: 128,
+    wx: 11.5,
+    wy: -11.0,
+    fac_ctl: 'col',
+    sett_name: 'San Felipe East Jungle',
+    infra_nodes: []
+  },
+  {
+    id: 'col-41-7',
+    q: 9,
+    r: -5,
+    terrain: 'marsh',
+    infra: 1,
+    population: 8900,
+    elevation: 110,
+    wx: 14.5,
+    wy: -8.0,
+    fac_ctl: 'col',
+    sett_name: 'Guainía-Rio Negro Border Marsh',
+    infra_nodes: []
+  },
+
+  // --- 5 Additional Appended Hexes ---
+  {
+    id: 'col-41-8',
+    q: 7,
+    r: -5,
+    terrain: 'forest',
+    infra: 1,
+    population: 17500,
+    elevation: 140,
+    wx: 11.5,
+    wy: -8.0,
+    fac_ctl: 'col',
+    sett_name: 'Guainía Lower Border West',
+    infra_nodes: []
+  },
+  {
+    id: 'col-41-9',
+    q: 9,
+    r: -7,
+    terrain: 'marsh',
+    infra: 1,
+    population: 8200,
+    elevation: 112,
+    wx: 14.5,
+    wy: -11.0,
+    fac_ctl: 'col',
+    sett_name: 'Rio Negro Southeast Wetlands',
+    infra_nodes: []
+  },
+  {
+    id: 'col-41-10',
+    q: 8,
+    r: -4,
+    terrain: 'plain',
+    infra: 1,
+    population: 18400,
+    elevation: 132,
+    wx: 13.0,
+    wy: -6.5,
+    fac_ctl: 'col',
+    sett_name: 'Orinoco Outer Bank Southeast',
+    infra_nodes: []
+  },
+  {
+    id: 'col-41-11',
+    q: 7,
+    r: -4,
+    terrain: 'plain',
+    infra: 1,
+    population: 19100,
+    elevation: 135,
+    wx: 11.5,
+    wy: -6.5,
+    fac_ctl: 'col',
+    sett_name: 'Orinoco Outer Bank Central',
+    infra_nodes: []
+  },
+  {
+    id: 'col-41-12',
+    q: 9,
+    r: -4,
+    terrain: 'marsh',
+    infra: 1,
+    population: 7600,
+    elevation: 108,
+    wx: 14.5,
+    wy: -6.5,
+    fac_ctl: 'col',
+    sett_name: 'Orinoco Border Floodplain East',
+    infra_nodes: []
+  }
+];

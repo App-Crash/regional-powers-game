@@ -1,0 +1,186 @@
+import { type RuntimeHexEntity } from '../../../features/home/HexTypes';
+
+export const MOCK_COLOMBIA_THEATER_COL21: RuntimeHexEntity[] = [
+  // --- Existing Cluster ---
+  {
+    id: 'col-21-1',
+    q: 1,
+    r: -2,
+    terrain: 'jungle',
+    infra: 1,
+    population: 8900,
+    elevation: 135,
+    wx: 2.5,
+    wy: -3.5,
+    fac_ctl: 'col',
+    sett_name: 'Inírida River Basin',
+    infra_nodes: []
+  },
+  {
+    id: 'col-21-2',
+    q: 2,
+    r: -2,
+    terrain: 'jungle',
+    infra: 2,
+    population: 24000,
+    elevation: 120,
+    wx: 4.0,
+    wy: -3.5,
+    fac_ctl: 'col',
+    sett_name: 'Puerto Inírida Sector',
+    infra_nodes: [
+      {
+        id: 'node-col21-2',
+        name: 'Inírida Logistics Terminal',
+        cat: 'TRNSPRT',
+        tier: 2,
+        cap: 70,
+        state: 'online',
+        maint_dur: 10,
+        maint_prog: 0
+      }
+    ]
+  },
+  {
+    id: 'col-21-3',
+    q: 3,
+    r: -2,
+    terrain: 'forest',
+    infra: 1,
+    population: 7100,
+    elevation: 125,
+    wx: 5.5,
+    wy: -3.5,
+    fac_ctl: 'col',
+    sett_name: 'Orinoco-Guainía Confluence West',
+    infra_nodes: []
+  },
+  {
+    id: 'col-21-4',
+    q: 2,
+    r: -1,
+    terrain: 'plain',
+    infra: 1,
+    population: 14200,
+    elevation: 150,
+    wx: 4.0,
+    wy: -2.0,
+    fac_ctl: 'col',
+    sett_name: 'Vichada Southern Savanna',
+    infra_nodes: []
+  },
+  {
+    id: 'col-21-5',
+    q: 3,
+    r: -1,
+    terrain: 'plain',
+    infra: 1,
+    population: 12600,
+    elevation: 140,
+    wx: 5.5,
+    wy: -2.0,
+    fac_ctl: 'col',
+    sett_name: 'Orinoquía Lowlands South',
+    infra_nodes: []
+  },
+  {
+    id: 'col-21-6',
+    q: 0,
+    r: -2,
+    terrain: 'forest',
+    infra: 1,
+    population: 7600,
+    elevation: 165,
+    wx: 1.0,
+    wy: -3.5,
+    fac_ctl: 'col',
+    sett_name: 'Barrancominas South Forest',
+    infra_nodes: []
+  },
+  {
+    id: 'col-21-7',
+    q: 1,
+    r: -1,
+    terrain: 'plain',
+    infra: 1,
+    population: 10800,
+    elevation: 155,
+    wx: 2.5,
+    wy: -2.0,
+    fac_ctl: 'col',
+    sett_name: 'Guaviare-Inírida Interfluve',
+    infra_nodes: []
+  },
+  {
+    id: 'col-21-8',
+    q: 0,
+    r: -1,
+    terrain: 'marsh',
+    infra: 1,
+    population: 6400,
+    elevation: 160,
+    wx: 1.0,
+    wy: -2.0,
+    fac_ctl: 'col',
+    sett_name: 'Lower Guaviare Wetlands',
+    infra_nodes: []
+  },
+  {
+    id: 'col-21-9',
+    q: 2,
+    r: 0,
+    terrain: 'plain',
+    infra: 1,
+    population: 13500,
+    elevation: 145,
+    wx: 4.0,
+    wy: -0.5,
+    fac_ctl: 'col',
+    sett_name: 'Vichada Central Plains',
+    infra_nodes: []
+  },
+  {
+    id: 'col-21-10',
+    q: 3,
+    r: 0,
+    terrain: 'plain',
+    infra: 1,
+    population: 11900,
+    elevation: 130,
+    wx: 5.5,
+    wy: -0.5,
+    fac_ctl: 'col',
+    sett_name: 'Tuparro Southern Corridor',
+    infra_nodes: []
+  },
+
+  // --- Newly Appended Adjacent Hexes (2) ---
+  {
+    id: 'col-21-11',
+    q: 1,
+    r: 0,
+    terrain: 'plain',
+    infra: 1,
+    population: 9500,
+    elevation: 150,
+    wx: 2.5,
+    wy: -0.5,
+    fac_ctl: 'col',
+    sett_name: 'Guaviare Lowlands North',
+    infra_nodes: []
+  },
+  {
+    id: 'col-21-12',
+    q: 4,
+    r: -1,
+    terrain: 'plain',
+    infra: 1,
+    population: 8200,
+    elevation: 135,
+    wx: 7.0,
+    wy: -2.0,
+    fac_ctl: 'col',
+    sett_name: 'Orinoco Border Plain East',
+    infra_nodes: []
+  }
+];

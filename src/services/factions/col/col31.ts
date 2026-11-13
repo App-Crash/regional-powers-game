@@ -1,0 +1,186 @@
+import { type RuntimeHexEntity } from '../../../features/home/HexTypes';
+
+export const MOCK_COLOMBIA_THEATER_COL31: RuntimeHexEntity[] = [
+  // --- Existing ---
+  {
+    id: 'col-31-1',
+    q: -3,
+    r: -6,
+    terrain: 'forest',
+    infra: 2,
+    population: 26000,
+    elevation: 240,
+    wx: -3.5,
+    wy: -9.5,
+    fac_ctl: 'col',
+    sett_name: 'Yarí Plains Hub',
+    infra_nodes: [
+      {
+        id: 'node-col31-1',
+        name: 'Yarí Overland Supply Relay',
+        cat: 'TRNSPRT',
+        tier: 2,
+        cap: 70,
+        state: 'online',
+        maint_dur: 10,
+        maint_prog: 0
+      }
+    ]
+  },
+  {
+    id: 'col-31-2',
+    q: -2,
+    r: -6,
+    terrain: 'forest',
+    infra: 1,
+    population: 14500,
+    elevation: 225,
+    wx: -2.0,
+    wy: -9.5,
+    fac_ctl: 'col',
+    sett_name: 'Camuya River Basin',
+    infra_nodes: []
+  },
+  {
+    id: 'col-31-3',
+    q: -1,
+    r: -6,
+    terrain: 'jungle',
+    infra: 1,
+    population: 11200,
+    elevation: 210,
+    wx: -0.5,
+    wy: -9.5,
+    fac_ctl: 'col',
+    sett_name: 'Chiribiquete South Approach',
+    infra_nodes: []
+  },
+  {
+    id: 'col-31-4',
+    q: -1,
+    r: -7,
+    terrain: 'jungle',
+    infra: 1,
+    population: 9800,
+    elevation: 205,
+    wx: -0.5,
+    wy: -11.0,
+    fac_ctl: 'col',
+    sett_name: 'Mesai River Forest',
+    infra_nodes: []
+  },
+  {
+    id: 'col-31-5',
+    q: -1,
+    r: -8,
+    terrain: 'jungle',
+    infra: 1,
+    population: 8900,
+    elevation: 195,
+    wx: -0.5,
+    wy: -12.5,
+    fac_ctl: 'col',
+    sett_name: 'Araracuara East Gorge',
+    infra_nodes: []
+  },
+  {
+    id: 'col-31-6',
+    q: 0,
+    r: -8,
+    terrain: 'jungle',
+    infra: 1,
+    population: 8400,
+    elevation: 185,
+    wx: 1.0,
+    wy: -12.5,
+    fac_ctl: 'col',
+    sett_name: 'Caquetá Midstream Corridor',
+    infra_nodes: []
+  },
+  {
+    id: 'col-31-7',
+    q: 0,
+    r: -7,
+    terrain: 'jungle',
+    infra: 1,
+    population: 9100,
+    elevation: 190,
+    wx: 1.0,
+    wy: -11.0,
+    fac_ctl: 'col',
+    sett_name: 'Cuemaní River Sector',
+    infra_nodes: []
+  },
+
+  // --- 5 New Appended Hexes ---
+  {
+    id: 'col-31-8',
+    q: -2,
+    r: -7,
+    terrain: 'forest',
+    infra: 1,
+    population: 11800,
+    elevation: 215,
+    wx: -2.0,
+    wy: -11.0,
+    fac_ctl: 'col',
+    sett_name: 'San Vicente Interior Basin',
+    infra_nodes: []
+  },
+  {
+    id: 'col-31-9',
+    q: -3,
+    r: -7,
+    terrain: 'forest',
+    infra: 1,
+    population: 13200,
+    elevation: 220,
+    wx: -3.5,
+    wy: -11.0,
+    fac_ctl: 'col',
+    sett_name: 'Cartagena del Chairá East',
+    infra_nodes: []
+  },
+  {
+    id: 'col-31-10',
+    q: -2,
+    r: -8,
+    terrain: 'jungle',
+    infra: 1,
+    population: 9400,
+    elevation: 200,
+    wx: -2.0,
+    wy: -12.5,
+    fac_ctl: 'col',
+    sett_name: 'Apaporis West Border',
+    infra_nodes: []
+  },
+  {
+    id: 'col-31-11',
+    q: -3,
+    r: -8,
+    terrain: 'jungle',
+    infra: 1,
+    population: 10100,
+    elevation: 205,
+    wx: -3.5,
+    wy: -12.5,
+    fac_ctl: 'col',
+    sett_name: 'Cahuinarí National Park North',
+    infra_nodes: []
+  },
+  {
+    id: 'col-31-12',
+    q: -4,
+    r: -7,
+    terrain: 'forest',
+    infra: 1,
+    population: 14500,
+    elevation: 230,
+    wx: -5.0,
+    wy: -11.0,
+    fac_ctl: 'col',
+    sett_name: 'Solano Central Sector',
+    infra_nodes: []
+  }
+];

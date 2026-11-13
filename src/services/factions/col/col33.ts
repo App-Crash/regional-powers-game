@@ -1,0 +1,186 @@
+import { type RuntimeHexEntity } from '../../../features/home/HexTypes';
+
+export const MOCK_COLOMBIA_THEATER_COL33: RuntimeHexEntity[] = [
+  // --- Existing ---
+  {
+    id: 'col-33-1',
+    q: -1,
+    r: -2,
+    terrain: 'forest',
+    infra: 2,
+    population: 19200,
+    elevation: 175,
+    wx: -0.5,
+    wy: -3.5,
+    fac_ctl: 'col',
+    sett_name: 'Barrancominas Hub',
+    infra_nodes: [
+      {
+        id: 'node-col33-1',
+        name: 'Guaviare River Logistics Post',
+        cat: 'TRNSPRT',
+        tier: 2,
+        cap: 70,
+        state: 'online',
+        maint_dur: 10,
+        maint_prog: 0
+      }
+    ]
+  },
+  {
+    id: 'col-33-2',
+    q: 0,
+    r: -3,
+    terrain: 'forest',
+    infra: 1,
+    population: 11400,
+    elevation: 170,
+    wx: 1.0,
+    wy: -5.0,
+    fac_ctl: 'col',
+    sett_name: 'Morichal Nuevo Sector',
+    infra_nodes: []
+  },
+  {
+    id: 'col-33-3',
+    q: 3,
+    r: -3,
+    terrain: 'jungle',
+    infra: 1,
+    population: 7600,
+    elevation: 140,
+    wx: 5.5,
+    wy: -5.0,
+    fac_ctl: 'col',
+    sett_name: 'Cuiari River Basin',
+    infra_nodes: []
+  },
+  {
+    id: 'col-33-4',
+    q: 3,
+    r: -4,
+    terrain: 'jungle',
+    infra: 1,
+    population: 6900,
+    elevation: 145,
+    wx: 5.5,
+    wy: -6.5,
+    fac_ctl: 'col',
+    sett_name: 'Isana River Border Forest',
+    infra_nodes: []
+  },
+  {
+    id: 'col-33-5',
+    q: 4,
+    r: -3,
+    terrain: 'marsh',
+    infra: 1,
+    population: 6200,
+    elevation: 130,
+    wx: 7.0,
+    wy: -5.0,
+    fac_ctl: 'col',
+    sett_name: 'Guainía Eastern Floodplain',
+    infra_nodes: []
+  },
+  {
+    id: 'col-33-6',
+    q: 4,
+    r: -2,
+    terrain: 'forest',
+    infra: 1,
+    population: 7800,
+    elevation: 125,
+    wx: 7.0,
+    wy: -3.5,
+    fac_ctl: 'col',
+    sett_name: 'Cacahual Border Sector',
+    infra_nodes: []
+  },
+  {
+    id: 'col-33-7',
+    q: 3,
+    r: -5,
+    terrain: 'jungle',
+    infra: 1,
+    population: 5900,
+    elevation: 150,
+    wx: 5.5,
+    wy: -8.0,
+    fac_ctl: 'col',
+    sett_name: 'Pana Pana Jungle Corridor',
+    infra_nodes: []
+  },
+
+  // --- 5 New Appended Hexes ---
+  {
+    id: 'col-33-8',
+    q: 0,
+    r: -2,
+    terrain: 'forest',
+    infra: 1,
+    population: 14800,
+    elevation: 180,
+    wx: 1.0,
+    wy: -3.5,
+    fac_ctl: 'col',
+    sett_name: 'Guaviare Lower Basin',
+    infra_nodes: []
+  },
+  {
+    id: 'col-33-9',
+    q: 1,
+    r: -2,
+    terrain: 'forest',
+    infra: 1,
+    population: 13500,
+    elevation: 165,
+    wx: 2.5,
+    wy: -3.5,
+    fac_ctl: 'col',
+    sett_name: 'Inírida West Transition',
+    infra_nodes: []
+  },
+  {
+    id: 'col-33-10',
+    q: 2,
+    r: -2,
+    terrain: 'forest',
+    infra: 1,
+    population: 12100,
+    elevation: 160,
+    wx: 4.0,
+    wy: -3.5,
+    fac_ctl: 'col',
+    sett_name: 'Puerto Inírida Approach',
+    infra_nodes: []
+  },
+  {
+    id: 'col-33-11',
+    q: 1,
+    r: -3,
+    terrain: 'jungle',
+    infra: 1,
+    population: 9800,
+    elevation: 155,
+    wx: 2.5,
+    wy: -5.0,
+    fac_ctl: 'col',
+    sett_name: 'Guainía Central Forest',
+    infra_nodes: []
+  },
+  {
+    id: 'col-33-12',
+    q: 2,
+    r: -3,
+    terrain: 'jungle',
+    infra: 1,
+    population: 8900,
+    elevation: 150,
+    wx: 4.0,
+    wy: -5.0,
+    fac_ctl: 'col',
+    sett_name: 'Atabapo West Sector',
+    infra_nodes: []
+  }
+];

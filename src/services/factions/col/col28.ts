@@ -1,0 +1,186 @@
+import { type RuntimeHexEntity } from '../../../features/home/HexTypes';
+
+export const MOCK_COLOMBIA_THEATER_COL28: RuntimeHexEntity[] = [
+  // --- Existing ---
+  {
+    id: 'col-28-1',
+    q: -4,
+    r: 0,
+    terrain: 'plain',
+    infra: 2,
+    population: 42000,
+    elevation: 280,
+    wx: -5.0,
+    wy: -0.5,
+    fac_ctl: 'col',
+    sett_name: 'Granada Ariari Hub',
+    infra_nodes: [
+      {
+        id: 'node-col28-1',
+        name: 'Ariari Agricultural & Logistics Depot',
+        cat: 'TRNSPRT',
+        tier: 2,
+        cap: 80,
+        state: 'online',
+        maint_dur: 10,
+        maint_prog: 0
+      }
+    ]
+  },
+  {
+    id: 'col-28-2',
+    q: -3,
+    r: 0,
+    terrain: 'plain',
+    infra: 1,
+    population: 24500,
+    elevation: 240,
+    wx: -3.5,
+    wy: -0.5,
+    fac_ctl: 'col',
+    sett_name: 'San Juan de Arama Plain',
+    infra_nodes: []
+  },
+  {
+    id: 'col-28-3',
+    q: -5,
+    r: 0,
+    terrain: 'hills',
+    infra: 1,
+    population: 19800,
+    elevation: 520,
+    wx: -6.5,
+    wy: -0.5,
+    fac_ctl: 'col',
+    sett_name: 'Lejanías Western Foothills',
+    infra_nodes: []
+  },
+  {
+    id: 'col-28-4',
+    q: -5,
+    r: -1,
+    terrain: 'mountain',
+    infra: 1,
+    population: 16400,
+    elevation: 1150,
+    wx: -6.5,
+    wy: -2.0,
+    fac_ctl: 'col',
+    sett_name: 'Mesetas Cordillera Slope',
+    infra_nodes: []
+  },
+  {
+    id: 'col-28-5',
+    q: -6,
+    r: -1,
+    terrain: 'mountain',
+    infra: 1,
+    population: 14200,
+    elevation: 1480,
+    wx: -8.0,
+    wy: -2.0,
+    fac_ctl: 'col',
+    sett_name: 'Uribe Mountain Pass',
+    infra_nodes: []
+  },
+  {
+    id: 'col-28-6',
+    q: -6,
+    r: -2,
+    terrain: 'hills',
+    infra: 1,
+    population: 15900,
+    elevation: 790,
+    wx: -8.0,
+    wy: -3.5,
+    fac_ctl: 'col',
+    sett_name: 'La Macarena North Ridge',
+    infra_nodes: []
+  },
+  {
+    id: 'col-28-7',
+    q: -6,
+    r: -3,
+    terrain: 'hills',
+    infra: 1,
+    population: 13800,
+    elevation: 640,
+    wx: -8.0,
+    wy: -5.0,
+    fac_ctl: 'col',
+    sett_name: 'Guayabero Upper Gorge',
+    infra_nodes: []
+  },
+
+  // --- 5 New Appended Hexes ---
+  {
+    id: 'col-28-8',
+    q: -3,
+    r: 1,
+    terrain: 'plain',
+    infra: 1,
+    population: 17200,
+    elevation: 210,
+    wx: -3.5,
+    wy: 1.0,
+    fac_ctl: 'col',
+    sett_name: 'Vista Hermosa North Plain',
+    infra_nodes: []
+  },
+  {
+    id: 'col-28-9',
+    q: -2,
+    r: 0,
+    terrain: 'plain',
+    infra: 1,
+    population: 18900,
+    elevation: 220,
+    wx: -2.0,
+    wy: -0.5,
+    fac_ctl: 'col',
+    sett_name: 'Puerto Rico Meta Approach',
+    infra_nodes: []
+  },
+  {
+    id: 'col-28-10',
+    q: -2,
+    r: 1,
+    terrain: 'plain',
+    infra: 1,
+    population: 15600,
+    elevation: 205,
+    wx: -2.0,
+    wy: 1.0,
+    fac_ctl: 'col',
+    sett_name: 'Puerto Lleras East Savanna',
+    infra_nodes: []
+  },
+  {
+    id: 'col-28-11',
+    q: -4,
+    r: 1,
+    terrain: 'hills',
+    infra: 1,
+    population: 16100,
+    elevation: 410,
+    wx: -5.0,
+    wy: 1.0,
+    fac_ctl: 'col',
+    sett_name: 'San Martín West Foothills',
+    infra_nodes: []
+  },
+  {
+    id: 'col-28-12',
+    q: -5,
+    r: 1,
+    terrain: 'mountain',
+    infra: 1,
+    population: 12400,
+    elevation: 890,
+    wx: -6.5,
+    wy: 1.0,
+    fac_ctl: 'col',
+    sett_name: 'Cubará Mountain Transition',
+    infra_nodes: []
+  }
+];
