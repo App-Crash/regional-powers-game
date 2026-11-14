@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { getCurvatureHeight, TERRAIN_ROTATION_X } from './CurvedTerrain';
 import { gameApi } from '../../services/gameApi';
 import { type HexData, type DiplomaticStance } from './HexTypes';
+import { MOCK_COLOMBIA_THEATER } from '../../services/factions/col';
+import { buildVenezuelaTheater } from '../../services/factions/ven';
 
 const HEX_SIZE = 1.3;
 const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
@@ -59,7 +61,6 @@ export function updatePoliticalControlGroup(
       return;
     }
 
-    // Compute wx, wy directly from q, r so control overlay matches city & hit meshes
     const { wx, wy } = axialToWorld(q, r);
 
     const rotX = TERRAIN_ROTATION_X;
@@ -119,7 +120,6 @@ export function rebuildHexGridFromData(
 ) {
   GLOBAL_HEX_DATA.clear();
   hexList.forEach((hex) => {
-    // Normalize wx, wy on hydration so every consumer shares identical coordinates
     const { wx, wy } = axialToWorld(hex.q, hex.r);
     GLOBAL_HEX_DATA.set(`${hex.q},${hex.r}`, { ...hex, wx, wy });
   });
@@ -217,7 +217,7 @@ export function rebuildHexGridFromData(
     gridGroup.add(controlGroup);
   }
 
-  console.log(`[HexGridLayer] Rebuilt ${hitMeshCount} aligned hex meshes from gameApi.`);
+  console.log(`[HexGridLayer] Rebuilt ${hitMeshCount} aligned hex meshes (Colombia + Venezuela).`);
 }
 
 export function createHexGridGroup(): { gridGroup: THREE.Group; controlGroup: THREE.Group } {
@@ -228,18 +228,21 @@ export function createHexGridGroup(): { gridGroup: THREE.Group; controlGroup: TH
   controlGroup.name = 'PoliticalControlLayer';
   gridGroup.add(controlGroup);
 
-  gameApi.getRuntimeTheater().then((theaterHexes) => {
-    rebuildHexGridFromData(gridGroup, controlGroup, theaterHexes);
-  });
+  const combinedTheater = [
+    ...MOCK_COLOMBIA_THEATER,
+    ...buildVenezuelaTheater('cold_war_1983'),
+  ];
+
+  rebuildHexGridFromData(gridGroup, controlGroup, combinedTheater);
 
   return { gridGroup, controlGroup };
 }
 
-export function createHexHighlightMesh(q: number, r: number): THREE.LineLoop {
+export function createHexHighlightMesh(q: number, r: number): THREE.Mesh {
   const { wx, wy } = axialToWorld(q, r);
   const rotX = TERRAIN_ROTATION_X;
 
-  const points: THREE.Vector3[] = [];
+  const localVerts: THREE.Vector3[] = [];
   for (let i = 0; i < 6; i++) {
     const angle = (Math.PI / 3) * i + Math.PI / 6;
     const vx = wx + HEX_SIZE * Math.cos(angle);
@@ -248,17 +251,35 @@ export function createHexHighlightMesh(q: number, r: number): THREE.LineLoop {
 
     const rotatedY = vy * Math.cos(rotX) - vz * Math.sin(rotX);
     const rotatedZ = vy * Math.sin(rotX) + vz * Math.cos(rotX);
-    points.push(new THREE.Vector3(vx, rotatedY, rotatedZ + 0.06));
+    localVerts.push(new THREE.Vector3(vx, rotatedY, rotatedZ + 0.05));
   }
 
-  const highlightGeo = new THREE.BufferGeometry().setFromPoints(points);
-  const highlightMat = new THREE.LineBasicMaterial({
+  const centerZ = getCurvatureHeight(wx, wy);
+  const rotatedCenterY = wy * Math.cos(rotX) - centerZ * Math.sin(rotX);
+  const rotatedCenterZ = wy * Math.sin(rotX) + centerZ * Math.cos(rotX);
+  const centerPos = new THREE.Vector3(wx, rotatedCenterY, rotatedCenterZ + 0.04);
+
+  const highlightGeo = new THREE.BufferGeometry();
+  const positions: number[] = [];
+  for (let i = 0; i < 6; i++) {
+    const v1 = localVerts[i];
+    const v2 = localVerts[(i + 1) % 6];
+    positions.push(centerPos.x, centerPos.y, centerPos.z);
+    positions.push(v1.x, v1.y, v1.z);
+    positions.push(v2.x, v2.y, v2.z);
+  }
+  highlightGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+
+  const highlightMat = new THREE.MeshBasicMaterial({
     color: 0x38bdf8,
-    linewidth: 3,
+    transparent: true,
+    opacity: 0.65,
+    side: THREE.DoubleSide,
     depthWrite: false,
+    depthTest: false,
   });
 
-  const highlightMesh = new THREE.LineLoop(highlightGeo, highlightMat);
-  highlightMesh.renderOrder = 3;
+  const highlightMesh = new THREE.Mesh(highlightGeo, highlightMat);
+  highlightMesh.renderOrder = 10;
   return highlightMesh;
 }
