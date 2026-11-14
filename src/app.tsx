@@ -1,14 +1,22 @@
 import React, { useState } from 'react';
 import { PlayerHomeViewport } from './features/home/PlayerHomeViewport';
 import { BattleArenaScreen } from './features/battle/BattleArenaScreen';
+import { useTheaterEditor } from './features/editor/TheaterEditorState';
+import { TheaterEditorUI } from './features/editor/TheaterEditorUI';
 
 export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'HOME' | 'BATTLE'>('HOME');
+  const editor = useTheaterEditor();
 
   return (
-    <div className="w-screen h-screen bg-slate-950 overflow-hidden">
+    <div className="w-screen h-screen bg-slate-950 overflow-hidden relative">
+      {currentView === 'HOME' && (
+        <TheaterEditorUI {...editor} />
+      )}
+
       {currentView === 'HOME' ? (
         <PlayerHomeViewport 
+          editor={editor}
           onLaunchCampaign={() => setCurrentView('BATTLE')} 
         />
       ) : (

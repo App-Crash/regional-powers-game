@@ -17,7 +17,7 @@ export const ERA_THEMES: Record<EraMode, EraThemeConfig> = {
   cold_war_1983: {
     id: 'cold_war_1983',
     label: '1983 // COLD WAR',
-    hudTitle: 'NORAD // REGIONAL COMMAND THEATER [WOPR v1.83]',
+    hudTitle: '',
     containerClasses: 'bg-black font-wargames crt-scanlines text-amber-400',
     headerClasses: 'bg-slate-950 border-b-2 border-amber-500/40',
     accentText: 'text-amber-400',

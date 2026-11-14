@@ -10,8 +10,8 @@ import { createBorderTextureOverlay } from '../../rendering/CurvedBorderOverlay'
 import { HexDetailsModal } from '../../components/HexDetailsModal';
 import { stopSectorSound } from './sectorAudio';
 import type { HexData, RuntimeHexEntity } from './HexTypes';
-import { buildTheaterRegion, type TheaterRegion } from '../../services/factions/index';import { useTheaterEditor } from '../editor/TheaterEditorState';
-import { TheaterEditorUI } from '../editor/TheaterEditorUI';
+import { buildTheaterRegion, type TheaterRegion } from '../../services/factions/index';
+import type { useTheaterEditor } from '../editor/TheaterEditorState';
 
 interface CurvedEarthMapProps {
   activeRegion?: TheaterRegion;
@@ -24,12 +24,14 @@ interface CurvedEarthMapProps {
     politicalControl: boolean;
     borders?: boolean;
   };
+  editor: ReturnType<typeof useTheaterEditor>;
   onSelectHex?: (hex: HexData | RuntimeHexEntity | null) => void;
 }
 
 export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
   activeRegion = 'SA',
   layers,
+  editor,
   onSelectHex,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,16 +43,12 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
   const structuresGroupRef = useRef<THREE.Group | null>(null);
 
   const [selectedHex, setSelectedHex] = useState<HexData | RuntimeHexEntity | null>(null);
-  const editor = useTheaterEditor();
 
   const editorRef = useRef(editor);
   editorRef.current = editor;
 
   const getCombinedTheater = () => {
-    const activeNationCode = (editor as any).activeNation || 'ven';
-    const baseRegionalHexes = buildTheaterRegion(activeRegion).filter(
-      (h: RuntimeHexEntity) => h.fac_ctl !== activeNationCode
-    );
+    const baseRegionalHexes = buildTheaterRegion(activeRegion);
     return [
       ...baseRegionalHexes,
       ...editor.cities,
@@ -77,31 +75,31 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
 
     const { mode, activeCityId, selectedSeedId, isPurgeMode } = editorRef.current;
 
-    if (mode === 'dev' && isPurgeMode) {
+    // Player mode inspection
+    if (mode === 'player') {
+      setSelectedHex(hex);
+      stopSectorSound();
+      if (onSelectHex) {
+        onSelectHex(hex);
+      }
+      return;
+    }
+
+    // Dev mode actions
+    if (isPurgeMode) {
       editorRef.current.handlePurgeHex(hex.q, hex.r);
       return;
     }
-
-    if (mode === 'dev' && selectedSeedId) {
+    if (selectedSeedId) {
       editorRef.current.handlePlaceSeed(hex.q, hex.r);
       return;
     }
-
-    if (mode === 'dev' && activeCityId) {
+    if (activeCityId) {
       editorRef.current.handleMoveCity(hex.q, hex.r);
       return;
     }
 
-    if (mode === 'dev') {
-      editorRef.current.handleToggleHexControl(hex.q, hex.r);
-      return;
-    }
-
-    setSelectedHex(hex);
-    stopSectorSound();
-    if (onSelectHex) {
-      onSelectHex(hex);
-    }
+    editorRef.current.handleToggleHexControl(hex.q, hex.r);
   };
 
   useEffect(() => {
@@ -240,7 +238,6 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
             selectedHex={selectedHex}
             onClose={() => handleSelectHex(null)}
           />
-          <TheaterEditorUI {...editor} />
         </div>
       </div>
     </div>

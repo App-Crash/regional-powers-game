@@ -48,7 +48,6 @@ export function useTheaterEditor() {
   // Track unplaced seeds dynamically based on active nation
   const getSeedsForNation = (code: string): UnplacedSeed[] => {
     if (code === 'ven') return UNPLACED_VENEZUELA_SEEDS;
-    // Fallback for nations without separate seed files yet (e.g. Colombia)
     return [];
   };
 
@@ -102,20 +101,33 @@ export function useTheaterEditor() {
   };
 
   const handleToggleHexControl = (q: number, r: number) => {
+    // 1. Check if clicked hex is a deployed city/seed hub -> if so, remove it back to unplaced pool
+    const existingCityIndex = cities.findIndex((c) => c.q === q && c.r === r);
+    if (existingCityIndex >= 0) {
+      setCities((prev) => prev.filter((_, idx) => idx !== existingCityIndex));
+      return;
+    }
+
+    // 2. Otherwise check filler hexes / painted region control
     const existingFillerIndex = fillerHexes.findIndex((h) => h.q === q && h.r === r);
 
     if (existingFillerIndex >= 0) {
       setFillerHexes((prev) => {
         const target = prev[existingFillerIndex];
         if (target.fac_ctl === activeNationCode) {
-          return prev.filter((_, idx) => idx !== existingFillerIndex);
+          // If already held by active nation, liberate/unclaim it (set as undefined / neutral)
+          const updated = [...prev];
+          updated[existingFillerIndex] = { ...target, fac_ctl: undefined as unknown as FactionCode };
+          return updated;
         } else {
+          // Claim for active nation
           const updated = [...prev];
           updated[existingFillerIndex] = { ...target, fac_ctl: activeNationCode as FactionCode };
           return updated;
         }
       });
     } else {
+      // Paint new hex for active nation
       const newHex: RuntimeHexEntity = {
         id: `${activeNationCode}-paint-${q}-${r}`,
         q,

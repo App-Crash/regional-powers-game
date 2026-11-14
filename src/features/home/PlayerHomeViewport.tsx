@@ -1,35 +1,24 @@
 import React, { useState, useMemo } from 'react';
 import { CurvedEarthMap } from './CurvedEarthMap';
-import type { RuntimeHexEntity, TerrainType } from './HexTypes';
+import type { RuntimeHexEntity } from './HexTypes';
 import { TheaterViewport } from './TheaterViewport';
 import { playSoundForHex, stopSectorSound } from './sectorAudio';
 import { buildTheaterRegion } from '../../services/factions';
-import { getEraThemeConfig, type EraMode } from '../../services/theater/eraConfig';
+import { getEraThemeConfig } from '../../services/theater/eraConfig';
+import type { useTheaterEditor } from '../editor/TheaterEditorState';
 
 interface PlayerHomeViewportProps {
+  editor: ReturnType<typeof useTheaterEditor>;
   onLaunchCampaign?: (viewportBounds: any) => void;
 }
 
-const TERRAIN_CYCLE: TerrainType[] = [
-  'plain',
-  'hills',
-  'mountain',
-  'forest',
-  'jungle',
-  'marsh',
-  'coastal',
-  'port',
-  'urban',
-];
-
-export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ onLaunchCampaign }) => {
+export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ editor, onLaunchCampaign }) => {
   const theater = useMemo(() => new TheaterViewport(), []);
 
-  const [era, setEra] = useState<EraMode>('cold_war_1983');
-  const [devBrushActive, setDevBrushActive] = useState<boolean>(false);
+  const era = 'cold_war_1983';
   const theme = useMemo(() => getEraThemeConfig(era), [era]);
 
-  const [regionalHexes, setRegionalHexes] = useState<RuntimeHexEntity[]>(() =>
+  const [regionalHexes] = useState<RuntimeHexEntity[]>(() =>
     buildTheaterRegion('SA')
   );
 
@@ -46,11 +35,6 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ onLaunch
   const [selectedHex, setSelectedHex] = useState<RuntimeHexEntity | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
-  const handleEraChange = (nextEra: EraMode) => {
-    setEra(nextEra);
-    setRegionalHexes(buildTheaterRegion('SA'));
-  };
-
   const handleSelectHex = (hex: RuntimeHexEntity | null) => {
     if (!hex) {
       setSelectedHex(null);
@@ -59,26 +43,7 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ onLaunch
     }
 
     playSoundForHex(hex);
-
-    if (devBrushActive) {
-      const nextTerrain =
-        TERRAIN_CYCLE[(TERRAIN_CYCLE.indexOf(hex.terrain) + 1) % TERRAIN_CYCLE.length];
-      const updatedHex: RuntimeHexEntity = { ...hex, terrain: nextTerrain };
-      setSelectedHex(updatedHex);
-      setRegionalHexes((prev) =>
-        prev.map((item) => (item.q === hex.q && item.r === hex.r ? updatedHex : item))
-      );
-      return;
-    }
-
     setSelectedHex(hex);
-  };
-
-  const handleExportRegionalJson = () => {
-    const payload = JSON.stringify(regionalHexes, null, 2);
-    navigator.clipboard?.writeText(payload);
-    console.log('EXPORTED REGIONAL THEATER JSON:', payload);
-    alert(`Copied ${regionalHexes.length} South America regional hexes (${era}) to clipboard & console.`);
   };
 
   const toggleLayer = (key: keyof typeof layers) => {
@@ -110,18 +75,16 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ onLaunch
 
   return (
     <div className={`w-screen h-screen overflow-hidden flex flex-col select-none ${theme.containerClasses}`}>
-      {/* Top Command Header */}
-      <header className={`h-[10%] min-h-[56px] px-6 flex items-center justify-between z-20 shadow-lg ${theme.headerClasses}`}>
+      <header className={`h-[10%] min-h-[56px] px-6 ${editor.mode === 'dev' ? 'mt-12' : 'mt-0'} transition-all flex items-center justify-between z-10 shadow-lg ${theme.headerClasses}`}>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 bg-amber-500 shadow-[0_0_8px_#f59e0b] animate-pulse"></span>
             <h1 className="tracking-widest text-lg md:text-xl font-bold">
-              {theme.hudTitle}
+              {theme.hudTitle} {editor.mode === 'dev' ? '[DEV EDITING ACTIVE]' : ''}
             </h1>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Telemetry Layers Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setActiveDropdown(activeDropdown === 'layers' ? null : 'layers')}
@@ -146,35 +109,6 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ onLaunch
                 </div>
               )}
             </div>
-
-            {/* Era Mode Selector */}
-            <button
-              onClick={() => handleEraChange(era === 'cold_war_1983' ? 'modern_2026' : 'cold_war_1983')}
-              className={`px-3 py-1 text-sm bg-black/50 hover:bg-black/80 rounded transition border ${theme.borderAccent} cursor-pointer`}
-            >
-              [ ERA: {theme.label} ]
-            </button>
-
-            {/* Dev Terrain Brush Toggle */}
-            <button
-              onClick={() => setDevBrushActive((prev) => !prev)}
-              className={`px-3 py-1 text-sm rounded transition border cursor-pointer ${
-                devBrushActive
-                  ? 'bg-amber-500 text-black font-bold border-amber-300'
-                  : 'bg-black/50 text-slate-400 border-slate-700 hover:text-amber-300'
-              }`}
-            >
-              [ DEV BRUSH: {devBrushActive ? 'ON' : 'OFF'} ]
-            </button>
-
-            {devBrushActive && (
-              <button
-                onClick={handleExportRegionalJson}
-                className="px-3 py-1 text-sm bg-emerald-900/70 hover:bg-emerald-800 text-emerald-200 rounded border border-emerald-500/60 cursor-pointer"
-              >
-                [ EXPORT REGION JSON ]
-              </button>
-            )}
           </div>
         </div>
 
@@ -197,9 +131,8 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ onLaunch
         </div>
       </header>
 
-      {/* Main Map Viewport */}
       <main className="relative h-[90%] w-full overflow-hidden bg-black">
-        <CurvedEarthMap activeRegion="SA" layers={layers} onSelectHex={handleSelectHex} />
+        <CurvedEarthMap activeRegion="SA" layers={layers} editor={editor} onSelectHex={handleSelectHex} />
 
         {selectedHex && (
           <div className={`absolute top-4 left-4 z-30 w-80 min-w-[280px] bg-slate-950 border-2 ${theme.borderAccent} rounded shadow-2xl p-4 flex flex-col gap-3 select-none`}>
