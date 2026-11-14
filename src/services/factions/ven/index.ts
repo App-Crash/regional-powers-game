@@ -1,29 +1,48 @@
-import type { RuntimeHexEntity } from '../../../features/home/HexTypes';
-import { MOCK_COLOMBIA_THEATER } from '../col';
-import { TheaterGeneratorService, type StrategicHubSeed } from '../../theater/TheaterGeneratorService';
-import type { EraMode } from '../../theater/eraConfig';
+import { type RuntimeHexEntity } from '../../../features/home/HexTypes';
+import { MOCK_VENEZUELA_CHUNK_1 } from './ven1';
+import { MOCK_VENEZUELA_CHUNK_2 } from './ven2';
+import { MOCK_VENEZUELA_CHUNK_3 } from './ven3';
+import { MOCK_VENEZUELA_CHUNK_4 } from './ven4';
+import { MOCK_VENEZUELA_CHUNK_5 } from './ven5';
+import { MOCK_VENEZUELA_CHUNK_6 } from './ven6';
+import { MOCK_VENEZUELA_CHUNK_7 } from './ven7';
+import { MOCK_VENEZUELA_CHUNK_8 } from './ven8';
+import { MOCK_VENEZUELA_CHUNK_9 } from './ven9';
+import { MOCK_VENEZUELA_CHUNK_10 } from './ven10';
+import { MOCK_VENEZUELA_CHUNK_11 } from './ven11';
+import { MOCK_VENEZUELA_CHUNK_12 } from './ven12';
+import { MOCK_VENEZUELA_CHUNK_13 } from './ven13';
+import { MOCK_VENEZUELA_CHUNK_14 } from './ven14';
+import { MOCK_VENEZUELA_CHUNK_15 } from './ven15';
+import { MOCK_VENEZUELA_CHUNK_16 } from './ven16';
+import { MOCK_VENEZUELA_CHUNK_17 } from './ven17';
 
-export const VENEZUELA_STRATEGIC_HUBS: StrategicHubSeed[] = [
-  { q: 12, r: -8, name: 'Caracas', terrain: 'urban', infra: 6, population: 3200000 },
-  { q: 12, r: -9, name: 'La Guaira', terrain: 'port', infra: 5, population: 350000 },
-  { q: 9, r: -7, name: 'Maracaibo', terrain: 'port', infra: 5, population: 2100000 },
-  { q: 11, r: -8, name: 'Valencia', terrain: 'urban', infra: 4, population: 1500000 },
-  { q: 16, r: -6, name: 'Ciudad Guayana', terrain: 'urban', infra: 4, population: 950000 },
-  { q: 10, r: -6, name: 'Mérida', terrain: 'mountain', infra: 3, population: 450000 },
-  { q: 9, r: -5, name: 'San Cristóbal', terrain: 'mountain', infra: 3, population: 600000 },
+export const NATION_META = {
+  code: 'ven' as const,
+  region: 'SA' as const,
+  name: 'Venezuela',
+};
+
+export const MOCK_VENEZUELA_THEATER: RuntimeHexEntity[] = [
+  ...MOCK_VENEZUELA_CHUNK_1,
+  ...MOCK_VENEZUELA_CHUNK_2,
+  ...MOCK_VENEZUELA_CHUNK_3,
+  ...MOCK_VENEZUELA_CHUNK_4,
+  ...MOCK_VENEZUELA_CHUNK_5,
+  ...MOCK_VENEZUELA_CHUNK_6,
+  ...MOCK_VENEZUELA_CHUNK_7,
+  ...MOCK_VENEZUELA_CHUNK_8,
+  ...MOCK_VENEZUELA_CHUNK_9,
+  ...MOCK_VENEZUELA_CHUNK_10,
+  ...MOCK_VENEZUELA_CHUNK_11,
+  ...MOCK_VENEZUELA_CHUNK_12,
+  ...MOCK_VENEZUELA_CHUNK_13,
+  ...MOCK_VENEZUELA_CHUNK_14,
+  ...MOCK_VENEZUELA_CHUNK_15,
+  ...MOCK_VENEZUELA_CHUNK_16,
+  ...MOCK_VENEZUELA_CHUNK_17,
 ];
 
-export function buildVenezuelaTheater(era: EraMode = 'cold_war_1983'): RuntimeHexEntity[] {
-  const venHexes = TheaterGeneratorService.generateTheater({
-    nationId: 'ven',
-    era,
-    // Corrected northern tier (less negative / closer to origin r, higher q)
-    qRange: [8, 18],
-    rRange: [-12, -3],
-    existingEntities: MOCK_COLOMBIA_THEATER,
-    strategicHubs: VENEZUELA_STRATEGIC_HUBS,
-  });
-  return venHexes;
+export function buildTheaterNation(): RuntimeHexEntity[] {
+  return MOCK_VENEZUELA_THEATER;
 }
-
-export const MOCK_VENEZUELA_THEATER: RuntimeHexEntity[] = buildVenezuelaTheater('cold_war_1983');

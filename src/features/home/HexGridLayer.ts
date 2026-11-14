@@ -2,8 +2,7 @@ import * as THREE from 'three';
 import { getCurvatureHeight, TERRAIN_ROTATION_X } from './CurvedTerrain';
 import { gameApi } from '../../services/gameApi';
 import { type HexData, type DiplomaticStance } from './HexTypes';
-import { MOCK_COLOMBIA_THEATER } from '../../services/factions/col';
-import { buildVenezuelaTheater } from '../../services/factions/ven';
+import { buildTheaterRegion } from '../../services/factions';
 
 const HEX_SIZE = 1.3;
 const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
@@ -217,7 +216,7 @@ export function rebuildHexGridFromData(
     gridGroup.add(controlGroup);
   }
 
-  console.log(`[HexGridLayer] Rebuilt ${hitMeshCount} aligned hex meshes (Colombia + Venezuela).`);
+  console.log(`[HexGridLayer] Rebuilt ${hitMeshCount} aligned hex meshes (Regional Theater SA).`);
 }
 
 export function createHexGridGroup(): { gridGroup: THREE.Group; controlGroup: THREE.Group } {
@@ -228,10 +227,7 @@ export function createHexGridGroup(): { gridGroup: THREE.Group; controlGroup: TH
   controlGroup.name = 'PoliticalControlLayer';
   gridGroup.add(controlGroup);
 
-  const combinedTheater = [
-    ...MOCK_COLOMBIA_THEATER,
-    ...buildVenezuelaTheater('cold_war_1983'),
-  ];
+  const combinedTheater = buildTheaterRegion('SA');
 
   rebuildHexGridFromData(gridGroup, controlGroup, combinedTheater);
 

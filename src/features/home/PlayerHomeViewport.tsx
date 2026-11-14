@@ -3,7 +3,7 @@ import { CurvedEarthMap } from './CurvedEarthMap';
 import type { RuntimeHexEntity, TerrainType } from './HexTypes';
 import { TheaterViewport } from './TheaterViewport';
 import { playSoundForHex, stopSectorSound } from './sectorAudio';
-import { buildVenezuelaTheater } from '../../services/factions/ven';
+import { buildTheaterRegion } from '../../services/factions';
 import { getEraThemeConfig, type EraMode } from '../../services/theater/eraConfig';
 
 interface PlayerHomeViewportProps {
@@ -29,8 +29,8 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ onLaunch
   const [devBrushActive, setDevBrushActive] = useState<boolean>(false);
   const theme = useMemo(() => getEraThemeConfig(era), [era]);
 
-  const [venezuelaHexes, setVenezuelaHexes] = useState<RuntimeHexEntity[]>(() =>
-    buildVenezuelaTheater('cold_war_1983')
+  const [regionalHexes, setRegionalHexes] = useState<RuntimeHexEntity[]>(() =>
+    buildTheaterRegion('SA')
   );
 
   const [layers, setLayers] = useState({
@@ -48,7 +48,7 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ onLaunch
 
   const handleEraChange = (nextEra: EraMode) => {
     setEra(nextEra);
-    setVenezuelaHexes(buildVenezuelaTheater(nextEra));
+    setRegionalHexes(buildTheaterRegion('SA'));
   };
 
   const handleSelectHex = (hex: RuntimeHexEntity | null) => {
@@ -65,7 +65,7 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ onLaunch
         TERRAIN_CYCLE[(TERRAIN_CYCLE.indexOf(hex.terrain) + 1) % TERRAIN_CYCLE.length];
       const updatedHex: RuntimeHexEntity = { ...hex, terrain: nextTerrain };
       setSelectedHex(updatedHex);
-      setVenezuelaHexes((prev) =>
+      setRegionalHexes((prev) =>
         prev.map((item) => (item.q === hex.q && item.r === hex.r ? updatedHex : item))
       );
       return;
@@ -74,11 +74,11 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ onLaunch
     setSelectedHex(hex);
   };
 
-  const handleExportVenezuelaJson = () => {
-    const payload = JSON.stringify(venezuelaHexes, null, 2);
+  const handleExportRegionalJson = () => {
+    const payload = JSON.stringify(regionalHexes, null, 2);
     navigator.clipboard?.writeText(payload);
-    console.log('EXPORTED VENEZUELA THEATER JSON:', payload);
-    alert(`Copied ${venezuelaHexes.length} Venezuela hexes (${era}) to clipboard & console.`);
+    console.log('EXPORTED REGIONAL THEATER JSON:', payload);
+    alert(`Copied ${regionalHexes.length} South America regional hexes (${era}) to clipboard & console.`);
   };
 
   const toggleLayer = (key: keyof typeof layers) => {
@@ -88,9 +88,8 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ onLaunch
   const getControlBadge = (control: RuntimeHexEntity['fac_ctl']) => {
     switch (control) {
       case 'ven':
-        return <span className={`${theme.accentText} font-bold tracking-widest`}>{theme.badgeFriendly}</span>;
       case 'col':
-        return <span className="text-red-500 font-bold tracking-widest">{theme.badgeHostile}</span>;
+        return <span className={`${theme.accentText} font-bold tracking-widest uppercase`}>[{control}]</span>;
       case 'bra':
         return <span className="text-cyan-400 font-bold tracking-widest">[REGIONAL // BRA]</span>;
       case null:
@@ -170,10 +169,10 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ onLaunch
 
             {devBrushActive && (
               <button
-                onClick={handleExportVenezuelaJson}
+                onClick={handleExportRegionalJson}
                 className="px-3 py-1 text-sm bg-emerald-900/70 hover:bg-emerald-800 text-emerald-200 rounded border border-emerald-500/60 cursor-pointer"
               >
-                [ EXPORT VEN JSON ]
+                [ EXPORT REGION JSON ]
               </button>
             )}
           </div>
@@ -182,11 +181,11 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ onLaunch
         <div className="flex items-center gap-4 text-sm tracking-wider">
           <div className={`hidden lg:flex items-center gap-1.5 bg-black px-3 py-1 rounded border ${theme.borderAccent}`}>
             <span className="opacity-70">GRID:</span>
-            <span>{activeTiles.length + venezuelaHexes.length} TILES</span>
+            <span>{activeTiles.length + regionalHexes.length} TILES</span>
           </div>
           <div className={`hidden lg:flex items-center gap-1.5 bg-black px-3 py-1 rounded border ${theme.borderAccent}`}>
-            <span className="opacity-70">VEN SECTORS:</span>
-            <span>{venezuelaHexes.length}</span>
+            <span className="opacity-70">SA SECTORS:</span>
+            <span>{regionalHexes.length}</span>
           </div>
 
           <button
@@ -200,7 +199,7 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ onLaunch
 
       {/* Main Map Viewport */}
       <main className="relative h-[90%] w-full overflow-hidden bg-black">
-        <CurvedEarthMap layers={layers} onSelectHex={handleSelectHex} />
+        <CurvedEarthMap activeRegion="SA" layers={layers} onSelectHex={handleSelectHex} />
 
         {selectedHex && (
           <div className={`absolute top-4 left-4 z-30 w-80 min-w-[280px] bg-slate-950 border-2 ${theme.borderAccent} rounded shadow-2xl p-4 flex flex-col gap-3 select-none`}>

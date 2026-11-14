@@ -49,6 +49,12 @@ import { MOCK_COLOMBIA_THEATER_COL48 } from './col48';
 import { MOCK_COLOMBIA_THEATER_COL49 } from './col49';
 import { MOCK_COLOMBIA_THEATER_COL50 } from './col50';
 
+export const NATION_META = {
+  code: 'col' as const,
+  region: 'SA' as const,
+  name: 'Colombia',
+};
+
 export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
   ...MOCK_COLOMBIA_THEATER_COL1,
   ...MOCK_COLOMBIA_THEATER_COL2,
@@ -98,5 +104,9 @@ export const MOCK_COLOMBIA_THEATER: RuntimeHexEntity[] = [
   ...MOCK_COLOMBIA_THEATER_COL47,
   ...MOCK_COLOMBIA_THEATER_COL48,
   ...MOCK_COLOMBIA_THEATER_COL49,
-  ...MOCK_COLOMBIA_THEATER_COL50
+  ...MOCK_COLOMBIA_THEATER_COL50,
 ];
+
+export function buildTheaterNation(): RuntimeHexEntity[] {
+  return MOCK_COLOMBIA_THEATER;
+}

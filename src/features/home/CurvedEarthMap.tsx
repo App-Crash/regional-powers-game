@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { initScene } from './SceneSetup';
-import { createHexGridGroup } from './HexGridLayer';
+import { createHexGridGroup, rebuildHexGridFromData } from './HexGridLayer';
 import { setupHexSelection } from './HexSelectionManager';
 import { getCurvatureHeight, TERRAIN_ROTATION_X } from './CurvedTerrain';
 import { TheaterViewport } from './TheaterViewport';
@@ -10,8 +10,11 @@ import { createBorderTextureOverlay } from '../../rendering/CurvedBorderOverlay'
 import { HexDetailsModal } from '../../components/HexDetailsModal';
 import { stopSectorSound } from './sectorAudio';
 import type { HexData, RuntimeHexEntity } from './HexTypes';
+import { buildTheaterRegion, type TheaterRegion } from '../../services/factions/index';import { useTheaterEditor } from '../editor/TheaterEditorState';
+import { TheaterEditorUI } from '../editor/TheaterEditorUI';
 
 interface CurvedEarthMapProps {
+  activeRegion?: TheaterRegion;
   layers: {
     hexGrid: boolean;
     topology: boolean;
@@ -24,16 +27,78 @@ interface CurvedEarthMapProps {
   onSelectHex?: (hex: HexData | RuntimeHexEntity | null) => void;
 }
 
-export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelectHex }) => {
+export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
+  activeRegion = 'SA',
+  layers,
+  onSelectHex,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const layersRef = useRef(layers);
   layersRef.current = layers;
 
+  const gridGroupRef = useRef<THREE.Group | null>(null);
+  const controlGroupRef = useRef<THREE.Group | null>(null);
+  const structuresGroupRef = useRef<THREE.Group | null>(null);
+
   const [selectedHex, setSelectedHex] = useState<HexData | RuntimeHexEntity | null>(null);
+  const editor = useTheaterEditor();
+
+  const editorRef = useRef(editor);
+  editorRef.current = editor;
+
+  const getCombinedTheater = () => {
+    const activeNationCode = (editor as any).activeNation || 'ven';
+    const baseRegionalHexes = buildTheaterRegion(activeRegion).filter(
+      (h: RuntimeHexEntity) => h.fac_ctl !== activeNationCode
+    );
+    return [
+      ...baseRegionalHexes,
+      ...editor.cities,
+      ...editor.fillerHexes,
+    ];
+  };
+
+  useEffect(() => {
+    if (!gridGroupRef.current || !controlGroupRef.current) return;
+    const combinedTheater = getCombinedTheater();
+    rebuildHexGridFromData(gridGroupRef.current, controlGroupRef.current, combinedTheater);
+    if (structuresGroupRef.current) {
+      initializeTheaterScene(structuresGroupRef.current, combinedTheater);
+    }
+  }, [editor.cities, editor.fillerHexes, activeRegion]);
 
   const handleSelectHex = (hex: HexData | RuntimeHexEntity | null) => {
+    if (!hex) {
+      setSelectedHex(null);
+      stopSectorSound();
+      if (onSelectHex) onSelectHex(null);
+      return;
+    }
+
+    const { mode, activeCityId, selectedSeedId, isPurgeMode } = editorRef.current;
+
+    if (mode === 'dev' && isPurgeMode) {
+      editorRef.current.handlePurgeHex(hex.q, hex.r);
+      return;
+    }
+
+    if (mode === 'dev' && selectedSeedId) {
+      editorRef.current.handlePlaceSeed(hex.q, hex.r);
+      return;
+    }
+
+    if (mode === 'dev' && activeCityId) {
+      editorRef.current.handleMoveCity(hex.q, hex.r);
+      return;
+    }
+
+    if (mode === 'dev') {
+      editorRef.current.handleToggleHexControl(hex.q, hex.r);
+      return;
+    }
+
     setSelectedHex(hex);
-    if (!hex) stopSectorSound(); // any deselection (modal close, empty click) stops the sound
+    stopSectorSound();
     if (onSelectHex) {
       onSelectHex(hex);
     }
@@ -50,7 +115,7 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
 
     const planeWidth = 350;
     const planeHeight = 350;
-    
+
     const tileMapGroup = new THREE.Group();
     tileMapGroup.name = 'TileMapGroup';
     tileMapGroup.position.set(0, 0, 0);
@@ -104,21 +169,26 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
 
     scene.add(tileMapGroup);
 
-    // 🏙️ Emergent Colombia Theater Structures Group
     const structuresGroup = new THREE.Group();
-    structuresGroup.name = 'ColombiaTheaterStructures';
+    structuresGroup.name = 'TheaterStructures';
+    structuresGroupRef.current = structuresGroup;
     scene.add(structuresGroup);
 
-    initializeTheaterScene(structuresGroup).then((registry) => {
-      console.log('[CurvedEarthMap] Colombia theater structures initialized:', Object.keys(registry).length, 'hubs loaded.');
+    const initialTheater = getCombinedTheater();
+
+    initializeTheaterScene(structuresGroup, initialTheater).then((registry) => {
+      console.log('[CurvedEarthMap] Theater structures initialized:', Object.keys(registry).length, 'hubs loaded.');
     });
 
-    // 🌐 International Borders Texture Overlay Group
     const bordersGroup = createBorderTextureOverlay('/assets/colombia_border_stencil.png', -4, 9);
     scene.add(bordersGroup);
 
     const { gridGroup, controlGroup } = createHexGridGroup();
+    gridGroupRef.current = gridGroup;
+    controlGroupRef.current = controlGroup;
     scene.add(gridGroup);
+
+    rebuildHexGridFromData(gridGroup, controlGroup, initialTheater);
 
     const cleanupSelection = setupHexSelection(
       renderer.domElement,
@@ -163,16 +233,14 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({ layers, onSelect
 
   return (
     <div className="relative w-full h-screen bg-slate-950 select-none overflow-hidden">
-      {/* 3D WebGL Viewport Canvas Container */}
       <div ref={containerRef} className="absolute inset-0 w-full h-full" />
-
-      {/* UI Overlay Layer with correct pointer-events stacking */}
       <div className="absolute inset-0 pointer-events-none z-50">
         <div className="pointer-events-auto">
-          <HexDetailsModal 
-            selectedHex={selectedHex} 
-            onClose={() => handleSelectHex(null)} 
+          <HexDetailsModal
+            selectedHex={selectedHex}
+            onClose={() => handleSelectHex(null)}
           />
+          <TheaterEditorUI {...editor} />
         </div>
       </div>
     </div>
