@@ -10,10 +10,10 @@ export class TheaterViewport {
 
   constructor(initialBounds?: ViewportBounds) {
     this.bounds = initialBounds || {
-      colStart: 2,   // Full western spread
-      colEnd: 9,  // Full eastern spread
-      rowStart: 3,   // Trim only northern edge overflow
-      rowEnd: 10,  // Full southern coverage (keeps bottom intact)
+      colStart: 4,   // Full western spread (Pacific / Colombia)
+      colEnd: 15,    // Expanded eastern spread (Venezuela & NW Brazil)
+      rowStart: 2,   // Includes northern Caribbean coast (Caracas / Maracaibo)
+      rowEnd: 10,    // Full southern coverage (keeps bottom intact)
     };
   }
 
@@ -24,7 +24,7 @@ export class TheaterViewport {
         activeTiles.push({
           col,
           row,
-          path: `/tiles/tile_${col}_${row}.png`
+          path: `/tiles/tile_${col}_${row}.png`,
         });
       }
     }
