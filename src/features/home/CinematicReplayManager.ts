@@ -3,7 +3,7 @@ import { getWaypointPosition } from '../../data/tacticalWaypoints';
 import type { BattleReport } from '../../types/battleReport';
 
 export interface CinematicReplayHandle {
-  update: (tSec: number, camera: THREE.PerspectiveCamera, controls: any) => void;
+  update: (tSec: number, camera: THREE.PerspectiveCamera, controls?: any) => void;
   cleanup: () => void;
 }
 
@@ -13,8 +13,6 @@ export function initCinematicReplay(
   onTimeUpdate?: (simClock: string, headline: string, note: string) => void,
   onComplete?: () => void
 ): CinematicReplayHandle {
-  console.log('[CinematicReplay DEBUG] initCinematicReplay called with report:', report);
-
   const replayGroup = new THREE.Group();
   replayGroup.name = 'TacticalCinematicReplayGroup';
   scene.add(replayGroup);
@@ -27,12 +25,9 @@ export function initCinematicReplay(
   dirLight.position.set(20, 40, 20);
   replayGroup.add(dirLight);
 
-  // --- 2. CORRECTED ELEVATIONS ---
+  // --- 2. WAYPOINTS & ELEVATIONS ---
   const rawDepotPos = getWaypointPosition ? getWaypointPosition('HEX-VEN-MARACAY-DEPOT') : null;
   const rawSubPos = getWaypointPosition ? getWaypointPosition('HEX-CARIBBEAN-SUB-01') : null;
-
-  console.log('[CinematicReplay DEBUG] rawSubPos from registry:', rawSubPos);
-  console.log('[CinematicReplay DEBUG] rawDepotPos from registry:', rawDepotPos);
 
   const fallbackDepot = new THREE.Vector3(2.2, 2.5, -4.5);
   const fallbackSub = new THREE.Vector3(5.2, 12.5, -18.5);
@@ -51,10 +46,6 @@ export function initCinematicReplay(
     subBase.z + NORTH_Z_OFFSET
   );
 
-  console.log('[CinematicReplay DEBUG] Final subStart:', subStart);
-  console.log('[CinematicReplay DEBUG] Final depotTarget:', depotTarget);
-
-  // Flight waypoints arching from sub to depot
   const coastalWaypoint = subStart.clone().lerp(depotTarget, 0.35).setY(13.5);
   const mountainWaypoint = subStart.clone().lerp(depotTarget, 0.65).setY(10.0);
 
@@ -71,54 +62,33 @@ export function initCinematicReplay(
     return new THREE.CatmullRomCurve3(pts);
   });
 
-  // Initial camera position placed directly BELOW the submarine looking up at the hull
-  const initialCamPos = subStart.clone().add(new THREE.Vector3(0.0, -3.5, 2.5));
-  const initialLookTarget = subStart.clone().add(new THREE.Vector3(0, 0.5, 0)); // Center on hull / tower
-
-  // Director Cinematic Camera Spline Path (starts after the 1s hold)
-  const cameraCurve = new THREE.CatmullRomCurve3([
-    subStart.clone().add(new THREE.Vector3(0.5, 2.5, 5.0)),
-    mountainWaypoint.clone().add(new THREE.Vector3(0, 4.0, 6.0)),
-    depotTarget.clone().add(new THREE.Vector3(2.0, 5.0, 8.0))
-  ]);
-
-  // --- 4. DETAILED 3D ASSETS ---
-  // Submarine
+  // --- 4. 3D ASSETS ---
   const subGroup = new THREE.Group();
-  const hullGeo = new THREE.CylinderGeometry(0.3, 0.3, 2.5, 16);
+  const hullGeo = new THREE.CylinderGeometry(0.4, 0.4, 3.0, 16);
   hullGeo.rotateX(Math.PI / 2);
   const subMat = new THREE.MeshStandardMaterial({ color: 0x1f2b2d, metalness: 0.7, roughness: 0.3 });
   const hull = new THREE.Mesh(hullGeo, subMat);
 
-  const towerGeo = new THREE.BoxGeometry(0.18, 0.35, 0.6);
+  const towerGeo = new THREE.BoxGeometry(0.25, 0.5, 0.8);
   const towerMat = new THREE.MeshStandardMaterial({ color: 0x152224, metalness: 0.6, roughness: 0.4 });
   const tower = new THREE.Mesh(towerGeo, towerMat);
-  tower.position.set(0, 0.3, 0.15);
+  tower.position.set(0, 0.4, 0.15);
 
   subGroup.add(hull, tower);
   subGroup.position.copy(subStart);
   replayGroup.add(subGroup);
 
-  // Target Depot Complex
   const depotGroup = new THREE.Group();
-  
   const bunker = new THREE.Mesh(
     new THREE.BoxGeometry(1.0, 0.5, 1.0),
     new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.5, metalness: 0.3 })
   );
   bunker.position.y = 0.25;
-
-  const commsTower = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.04, 0.08, 0.6, 8),
-    new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.8, roughness: 0.2 })
-  );
-  commsTower.position.set(0.25, 0.55, 0.25);
-
-  depotGroup.add(bunker, commsTower);
+  depotGroup.add(bunker);
   depotGroup.position.copy(depotTarget);
   replayGroup.add(depotGroup);
 
-  // Detailed Cruise Missiles
+  // Detailed Cruise Missiles with Blue/White Exhaust Plume
   const createMissileMesh = () => {
     const group = new THREE.Group();
     const body = new THREE.Mesh(
@@ -134,7 +104,20 @@ export function initCinematicReplay(
     nose.rotation.x = Math.PI / 2;
     nose.position.z = 0.32;
 
-    group.add(body, nose);
+    const flameGeo = new THREE.ConeGeometry(0.05, 0.3, 8);
+    flameGeo.rotateX(-Math.PI / 2);
+    const flameMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.9 });
+    const flame = new THREE.Mesh(flameGeo, flameMat);
+    flame.position.z = -0.35;
+
+    const innerFlame = new THREE.Mesh(
+      new THREE.ConeGeometry(0.025, 0.2, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0 })
+    );
+    innerFlame.rotateX(-Math.PI / 2);
+    innerFlame.position.z = -0.3;
+
+    group.add(body, nose, flame, innerFlame);
     return group;
   };
 
@@ -175,10 +158,10 @@ export function initCinematicReplay(
 
   let hasCompleted = false;
   const playbackDuration = 15.0;
-  const LAUNCH_DELAY_SEC = 1.0; // Exact 1-second hold looking up at the sub before launch
+  const LAUNCH_DELAY_SEC = 2.8;
 
   return {
-    update: (tSec: number, camera: THREE.PerspectiveCamera, controls: any) => {
+    update: (tSec: number, camera: THREE.PerspectiveCamera, controls?: any) => {
       const chapters = report.chapters || [];
       const chapter = 
         chapters.find((c: any) => tSec >= c.startSec && tSec < c.endSec) || 
@@ -188,42 +171,19 @@ export function initCinematicReplay(
         onTimeUpdate(chapter.simClock, chapter.headline, chapter.telemetryNote);
       }
 
-      // --- 5. CINEMATIC DIRECTOR CAMERA & 1-SEC HOLD ---
-      if (tSec < LAUNCH_DELAY_SEC) {
-        // Forcefully hold camera below sub, looking straight up at the hull
-        const currentSubPos = subStart.clone().add(new THREE.Vector3(0, Math.sin(tSec * 2.2) * 0.03, 0));
-        const currentCamPos = currentSubPos.clone().add(new THREE.Vector3(0.0, -3.5, 2.5));
-        const currentLookTarget = currentSubPos.clone().add(new THREE.Vector3(0, 0.5, 0));
-
-        camera.position.copy(currentCamPos);
-        if (controls && controls.target) {
-          controls.target.copy(currentLookTarget);
-        } else {
-          camera.lookAt(currentLookTarget);
-        }
-      } else {
-        const effectiveTSec = tSec - LAUNCH_DELAY_SEC;
-        const effectiveDuration = playbackDuration - LAUNCH_DELAY_SEC;
-        const currentT = THREE.MathUtils.clamp(effectiveTSec / effectiveDuration, 0, 1);
-
-        const camPos = cameraCurve.getPointAt(currentT);
-        camera.position.lerp(camPos, 0.12);
-
-        const lookTarget = currentT < 0.85 && missileMeshes[0].visible ? missileMeshes[0].position : impactTargetPos;
-        if (controls && controls.target) {
-          controls.target.lerp(lookTarget, 0.12);
-        } else {
-          camera.lookAt(lookTarget);
-        }
-      }
+      replayGroup.updateMatrixWorld(true);
 
       const subSwell = Math.sin(tSec * 2.2) * 0.03;
-      subGroup.position.copy(subStart).add(new THREE.Vector3(0, subSwell, 0));
+      const currentSubPos = subStart.clone().add(new THREE.Vector3(0, subSwell, 0));
+      subGroup.position.copy(currentSubPos);
+      subGroup.updateMatrixWorld(true);
 
-      // --- 6. STAGGERED MISSILE LAUNCH & FLIGHT ---
-      if (tSec < LAUNCH_DELAY_SEC) {
-        missileMeshes.forEach(m => { m.visible = false; });
-      } else {
+      // --- 5. STAGGERED MISSILE FLIGHT & 6TH MISSILE TRACKING ---
+      let sixthMissilePos: THREE.Vector3 | null = null;
+      let sixthMissileTangent = new THREE.Vector3(0, 0, 1);
+      let leadMissilePos: THREE.Vector3 | null = null;
+
+      if (tSec >= LAUNCH_DELAY_SEC) {
         const effectiveTSec = tSec - LAUNCH_DELAY_SEC;
         const effectiveDuration = playbackDuration - LAUNCH_DELAY_SEC;
         const effectiveT = THREE.MathUtils.clamp(effectiveTSec / effectiveDuration, 0, 1);
@@ -237,7 +197,17 @@ export function initCinematicReplay(
           if (localT > 0 && localT < 1) {
             m.visible = true;
             m.lookAt(pos.clone().add(tangent));
-            
+            m.updateMatrixWorld(true);
+
+            if (!leadMissilePos) {
+              leadMissilePos = pos.clone();
+            }
+
+            if (idx === 5) {
+              sixthMissilePos = pos.clone();
+              sixthMissileTangent = tangent.clone();
+            }
+
             if (localT >= 0.98) {
               triggerImpactExplosion(idx, impactTargetPos);
             }
@@ -245,6 +215,51 @@ export function initCinematicReplay(
             m.visible = false;
           }
         });
+      } else {
+        missileMeshes.forEach(m => { m.visible = false; });
+      }
+
+      // --- 6. VECTOR-BASED CINEMATIC CAMERA (NORTH LOOKING SOUTH TOWARD DEPOT) ---
+      let targetCamPos = new THREE.Vector3();
+      let targetLookAt = new THREE.Vector3();
+
+      // Compute vector from sub to depot (South / forward path)
+      const vectorToDepot = depotTarget.clone().sub(currentSubPos).normalize();
+
+      if (tSec < LAUNCH_DELAY_SEC) {
+        // Pre-launch hold: Positioned North (backward along the path away from depot) looking South at the sub
+        targetCamPos.copy(currentSubPos).sub(vectorToDepot.clone().multiplyScalar(4.5));
+        targetLookAt.copy(currentSubPos);
+      } else {
+        // Flight phase: smooth transition behind the missiles
+        const effectiveTSec = tSec - LAUNCH_DELAY_SEC;
+        const effectiveDuration = playbackDuration - LAUNCH_DELAY_SEC;
+        const flightT = THREE.MathUtils.clamp(effectiveTSec / effectiveDuration, 0, 1);
+
+        const activeMissilePos = sixthMissilePos || leadMissilePos;
+
+        if (activeMissilePos) {
+          const camOffset = sixthMissileTangent.clone().multiplyScalar(-3.5).add(new THREE.Vector3(0, 1.2, 0));
+          targetCamPos.copy(activeMissilePos).add(camOffset);
+          targetLookAt.copy(activeMissilePos).add(sixthMissileTangent.clone().multiplyScalar(5.0));
+        } else {
+          targetCamPos.copy(currentSubPos).lerp(impactTargetPos, flightT).add(new THREE.Vector3(0, 3.0, -4.0));
+          targetLookAt.copy(impactTargetPos);
+        }
+      }
+
+      // Smooth interpolation
+      if (controls) {
+        controls.enabled = false;
+        camera.position.lerp(targetCamPos, 0.15);
+        controls.target.lerp(targetLookAt, 0.15);
+        controls.update();
+      } else {
+        camera.position.lerp(targetCamPos, 0.15);
+        camera.up.set(0, 1, 0);
+        const currentLookAt = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).add(camera.position);
+        currentLookAt.lerp(targetLookAt, 0.15);
+        camera.lookAt(currentLookAt);
       }
 
       if (tSec >= playbackDuration && !hasCompleted) {
