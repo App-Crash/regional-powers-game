@@ -12,6 +12,8 @@ import { stopSectorSound } from './sectorAudio';
 import type { HexData, RuntimeHexEntity } from './HexTypes';
 import { buildTheaterRegion, type TheaterRegion } from '../../services/factions/index';
 import type { useTheaterEditor } from '../editor/TheaterEditorState';
+import type { BattleReport } from '../../types/battleReport';
+import { initCinematicReplay } from './CinematicReplayManager';
 
 interface CurvedEarthMapProps {
   activeRegion?: TheaterRegion;
@@ -26,6 +28,11 @@ interface CurvedEarthMapProps {
   };
   editor: ReturnType<typeof useTheaterEditor>;
   onSelectHex?: (hex: HexData | RuntimeHexEntity | null) => void;
+  activeBattleReport?: BattleReport | null;
+  onBattleComplete?: () => void;
+  onTimeUpdate?: (simClock: string, headline: string, note: string) => void;
+  getHexWorldPos?: (hexId: string) => THREE.Vector3;
+  orbitControlsRef?: React.RefObject<any>;
 }
 
 export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
@@ -33,6 +40,9 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
   layers,
   editor,
   onSelectHex,
+  activeBattleReport,
+  onBattleComplete,
+  onTimeUpdate,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const layersRef = useRef(layers);
@@ -75,7 +85,6 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
 
     const { mode, activeCityId, selectedSeedId, isPurgeMode } = editorRef.current;
 
-    // Player mode inspection
     if (mode === 'player') {
       setSelectedHex(hex);
       stopSectorSound();
@@ -85,7 +94,6 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
       return;
     }
 
-    // Dev mode actions
     if (isPurgeMode) {
       editorRef.current.handlePurgeHex(hex.q, hex.r);
       return;
@@ -102,6 +110,7 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
     editorRef.current.handleToggleHexControl(hex.q, hex.r);
   };
 
+  // Unified Scene Initialization and Render Loop
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -196,14 +205,30 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
       (hex) => handleSelectHex(hex)
     );
 
+    // Initialize Cinematic Replay Manager if battle report is active
+    let replayHandle: any = null;
+    const clock = new THREE.Clock();
+
+    if (activeBattleReport) {
+      replayHandle = initCinematicReplay(scene, activeBattleReport, onTimeUpdate, onBattleComplete);
+    }
+
     let animationFrameId: number;
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
+
+      // Layer visibility states
       structuresGroup.visible = layersRef.current.milUnits || layersRef.current.econ;
       bordersGroup.visible = layersRef.current.borders ?? layersRef.current.politicalControl;
       gridGroup.visible = layersRef.current.hexGrid;
       controlGroup.visible = layersRef.current.politicalControl;
       tileMapGroup.visible = layersRef.current.topology || layersRef.current.hexGrid;
+
+      if (replayHandle) {
+        const tSec = clock.getElapsedTime();
+        replayHandle.update(tSec, camera as THREE.PerspectiveCamera, controls);
+      }
+
       controls.update();
       renderer.render(scene, camera);
     };
@@ -221,17 +246,19 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
       window.removeEventListener('resize', handleResize);
       cleanupSelection();
       cancelAnimationFrame(animationFrameId);
+      if (replayHandle) replayHandle.cleanup();
       controls.dispose();
       renderer.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
     };
-  }, []);
+  }, [activeBattleReport]);
 
   return (
     <div className="relative w-full h-screen bg-slate-950 select-none overflow-hidden">
       <div ref={containerRef} className="absolute inset-0 w-full h-full" />
+
       <div className="absolute inset-0 pointer-events-none z-50">
         <div className="pointer-events-auto">
           <HexDetailsModal

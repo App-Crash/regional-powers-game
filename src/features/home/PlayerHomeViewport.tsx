@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import * as THREE from 'three';
 import { CurvedEarthMap } from './CurvedEarthMap';
 import type { RuntimeHexEntity } from './HexTypes';
 import { TheaterViewport } from './TheaterViewport';
@@ -6,14 +7,26 @@ import { playSoundForHex, stopSectorSound } from './sectorAudio';
 import { buildTheaterRegion } from '../../services/factions';
 import { getEraThemeConfig } from '../../services/theater/eraConfig';
 import type { useTheaterEditor } from '../editor/TheaterEditorState';
+import { type BattleReport } from '../../types/battleReport';
+import { MOCK_CARACAS_REPORT } from '../../data/mockOperationCaracas';
 
 interface PlayerHomeViewportProps {
   editor: ReturnType<typeof useTheaterEditor>;
-  onLaunchCampaign?: (viewportBounds: any) => void;
+  onLaunchCampaign?: (viewportBoundsOrReport: any) => void;
+  activeBattleReport?: BattleReport | null;
+  onBattleComplete?: () => void;
+  onTimeUpdate?: (simClock: string, headline: string, note: string) => void;
 }
 
-export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ editor, onLaunchCampaign }) => {
+export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ 
+  editor, 
+  onLaunchCampaign,
+  activeBattleReport,
+  onBattleComplete,
+  onTimeUpdate
+}) => {
   const theater = useMemo(() => new TheaterViewport(), []);
+  const orbitControlsRef = useRef<any>(null);
 
   const era = 'cold_war_1983';
   const theme = useMemo(() => getEraThemeConfig(era), [era]);
@@ -35,6 +48,19 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ editor, 
   const [selectedHex, setSelectedHex] = useState<RuntimeHexEntity | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
+  useEffect(() => {
+    const handleExecute = () => {
+      if (onLaunchCampaign) {
+        // Launch the mock Caracas 3D cinematic battle report scenario
+        onLaunchCampaign(MOCK_CARACAS_REPORT);
+      }
+    };
+    window.addEventListener('execute-scenario', handleExecute as EventListener);
+    return () => {
+      window.removeEventListener('execute-scenario', handleExecute as EventListener);
+    };
+  }, [onLaunchCampaign]);
+
   const handleSelectHex = (hex: RuntimeHexEntity | null) => {
     if (!hex) {
       setSelectedHex(null);
@@ -49,6 +75,26 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ editor, 
   const toggleLayer = (key: keyof typeof layers) => {
     setLayers((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
+  const getHexWorldPos = useCallback((hexId: string): THREE.Vector3 => {
+    const coordinateMap: Record<string, [number, number, number]> = {
+      'HEX-COL-CUCUTA-BORDER': [-4.2, 0.4, 1.2],
+      'HEX-VEN-TACHIRA-HIGHWAY': [-2.8, 0.5, 1.0],
+      'HEX-VEN-BARINAS-ROAD': [-1.2, 0.6, 0.5],
+      'HEX-CARIBBEAN-SUB-01': [-3.0, -1.8, -3.5],
+      'HEX-VEN-MARACAY-DEPOT': [0.5, 0.8, -0.2],
+      'HEX-COL-ARAUCA-FOB': [-3.8, 0.4, 2.2],
+      'HEX-VEN-CARACAS-OUTSKIRTS': [0.2, 0.7, -0.8],
+      'HEX-VEN-MIRAFLORES-COMPOUND': [0.4, 0.75, -1.0],
+    };
+
+    const coords = coordinateMap[hexId];
+    if (coords) {
+      return new THREE.Vector3(...coords);
+    }
+    
+    return new THREE.Vector3(0, 0.5, 0);
+  }, []);
 
   const getControlBadge = (control: RuntimeHexEntity['fac_ctl']) => {
     switch (control) {
@@ -65,77 +111,63 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ editor, 
 
   const activeTiles = theater.getActiveTiles();
 
-  const handleLaunchCampaign = () => {
-    const bounds = theater.getBounds();
-    console.log('Launching campaign with viewport bounds:', bounds, 'Era:', era);
-    if (onLaunchCampaign) {
-      onLaunchCampaign(bounds);
-    }
-  };
-
   return (
-    <div className={`w-screen h-screen overflow-hidden flex flex-col select-none ${theme.containerClasses}`}>
-      <header className={`h-[10%] min-h-[56px] px-6 ${editor.mode === 'dev' ? 'mt-12' : 'mt-0'} transition-all flex items-center justify-between z-10 shadow-lg ${theme.headerClasses}`}>
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-amber-500 shadow-[0_0_8px_#f59e0b] animate-pulse"></span>
-            <h1 className="tracking-widest text-lg md:text-xl font-bold">
-              {theme.hudTitle} {editor.mode === 'dev' ? '[DEV EDITING ACTIVE]' : ''}
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <button
-                onClick={() => setActiveDropdown(activeDropdown === 'layers' ? null : 'layers')}
-                className={`px-3 py-1 text-sm bg-black/50 hover:bg-black/80 rounded transition border ${theme.borderAccent} cursor-pointer`}
-              >
-                [ TELEMETRY LAYERS ▾ ]
-              </button>
-              {activeDropdown === 'layers' && (
-                <div className={`absolute top-full left-0 mt-1 w-56 bg-slate-950 border-2 ${theme.borderAccent} rounded shadow-xl py-1 z-50 flex flex-col text-base`}>
-                  {(Object.keys(layers) as Array<keyof typeof layers>).map((key) => (
-                    <button
-                      key={key}
-                      onClick={() => toggleLayer(key)}
-                      className="px-4 py-2 text-left hover:bg-white/5 flex items-center justify-between uppercase"
-                    >
-                      <span>{key}</span>
-                      <span className={layers[key] ? 'font-bold' : 'text-slate-600'}>
-                        {layers[key] ? 'ACTIVE' : 'STANDBY'}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+    <div className={`w-full h-full overflow-hidden flex flex-col select-none relative ${theme.containerClasses}`}>
+      
+      {/* Floating Telemetry & Grid Stats Overlay */}
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-3 text-xs md:text-sm tracking-wider font-mono pointer-events-auto">
+        <div className={`hidden lg:flex items-center gap-1.5 bg-black/80 backdrop-blur px-3 py-1.5 rounded border ${theme.borderAccent}`}>
+          <span className="opacity-70">GRID:</span>
+          <span>{activeTiles.length + regionalHexes.length} TILES</span>
+        </div>
+        <div className={`hidden lg:flex items-center gap-1.5 bg-black/80 backdrop-blur px-3 py-1.5 rounded border ${theme.borderAccent}`}>
+          <span className="opacity-70">SA SECTORS:</span>
+          <span>{regionalHexes.length}</span>
         </div>
 
-        <div className="flex items-center gap-4 text-sm tracking-wider">
-          <div className={`hidden lg:flex items-center gap-1.5 bg-black px-3 py-1 rounded border ${theme.borderAccent}`}>
-            <span className="opacity-70">GRID:</span>
-            <span>{activeTiles.length + regionalHexes.length} TILES</span>
-          </div>
-          <div className={`hidden lg:flex items-center gap-1.5 bg-black px-3 py-1 rounded border ${theme.borderAccent}`}>
-            <span className="opacity-70">SA SECTORS:</span>
-            <span>{regionalHexes.length}</span>
-          </div>
-
+        {/* Telemetry Layers Dropdown */}
+        <div className="relative">
           <button
-            onClick={handleLaunchCampaign}
-            className="px-4 py-1.5 text-sm font-bold text-black bg-amber-500 hover:bg-amber-400 rounded transition shadow-[0_0_12px_rgba(245,158,11,0.6)] tracking-widest cursor-pointer"
+            onClick={() => setActiveDropdown(activeDropdown === 'layers' ? null : 'layers')}
+            className={`px-3 py-1.5 bg-black/80 hover:bg-black rounded transition border ${theme.borderAccent} cursor-pointer font-bold shadow-lg`}
           >
-            EXECUTE SCENARIO
+            [ TELEMETRY LAYERS ▾ ]
           </button>
+          {activeDropdown === 'layers' && (
+            <div className={`absolute top-full right-0 mt-1 w-56 bg-slate-950 border-2 ${theme.borderAccent} rounded shadow-2xl py-1 z-50 flex flex-col text-sm`}>
+              {(Object.keys(layers) as Array<keyof typeof layers>).map((key) => (
+                <button
+                  key={key}
+                  onClick={() => toggleLayer(key)}
+                  className="px-4 py-2 text-left hover:bg-white/5 flex items-center justify-between uppercase cursor-pointer"
+                >
+                  <span>{key}</span>
+                  <span className={layers[key] ? 'font-bold text-emerald-400' : 'text-slate-600'}>
+                    {layers[key] ? 'ACTIVE' : 'STANDBY'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      </header>
+      </div>
 
-      <main className="relative h-[90%] w-full overflow-hidden bg-black">
-        <CurvedEarthMap activeRegion="SA" layers={layers} editor={editor} onSelectHex={handleSelectHex} />
+      {/* Main Map Viewport */}
+      <main className="relative w-full h-full overflow-hidden bg-black">
+        <CurvedEarthMap 
+          activeRegion="SA" 
+          layers={layers} 
+          editor={editor} 
+          onSelectHex={handleSelectHex} 
+          activeBattleReport={activeBattleReport}
+          onBattleComplete={onBattleComplete}
+          onTimeUpdate={onTimeUpdate}
+          getHexWorldPos={getHexWorldPos}
+          orbitControlsRef={orbitControlsRef}
+        />
 
-        {selectedHex && (
-          <div className={`absolute top-4 left-4 z-30 w-80 min-w-[280px] bg-slate-950 border-2 ${theme.borderAccent} rounded shadow-2xl p-4 flex flex-col gap-3 select-none`}>
+        {selectedHex && !activeBattleReport && (
+          <div className={`absolute top-4 left-4 z-30 w-80 min-w-[280px] bg-slate-950 border-2 ${theme.borderAccent} rounded shadow-2xl p-4 flex flex-col gap-3 select-none font-mono`}>
             <div className={`flex items-center justify-between border-b ${theme.borderAccent} pb-2`}>
               <span className="font-bold tracking-widest">
                 SECTOR [{selectedHex.q}, {selectedHex.r}]
