@@ -78,7 +78,7 @@ export function initCinematicReplay(
   subGroup.position.copy(subStart);
   replayGroup.add(subGroup);
 
-  // Target Depot Complex (Intact vs Collapsed state)
+  // Target Depot Complex
   const depotGroup = new THREE.Group();
   const intactBunker = new THREE.Mesh(
     new THREE.BoxGeometry(1.0, 0.5, 1.0),
@@ -87,9 +87,7 @@ export function initCinematicReplay(
   intactBunker.position.y = 0.25;
   depotGroup.add(intactBunker);
 
-  // Collapsed roof pieces (initially hidden)
   const rubbleMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8, metalness: 0.2 });
-  
   const roofSlab1 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.08, 0.9), rubbleMat);
   roofSlab1.position.set(-0.2, 0.15, 0);
   roofSlab1.rotation.z = 0.35;
@@ -104,16 +102,15 @@ export function initCinematicReplay(
 
   depotGroup.add(roofSlab1, roofSlab2);
 
-  // Smoke Plumes group (initially hidden)
   const smokeGroup = new THREE.Group();
   smokeGroup.visible = false;
   const smokeParticles: THREE.Mesh[] = [];
-  for (let p = 0; p < 4; p++) {
+  for (let p = 0; p < 6; p++) {
     const smokeMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.25, 8, 8),
-      new THREE.MeshBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.6 })
+      new THREE.SphereGeometry(0.22, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.65 })
     );
-    smokeMesh.position.set((Math.random() - 0.5) * 0.4, 0.3 + p * 0.2, (Math.random() - 0.5) * 0.4);
+    smokeMesh.position.set((Math.random() - 0.5) * 0.4, 0.3 + p * 0.18, (Math.random() - 0.5) * 0.4);
     smokeGroup.add(smokeMesh);
     smokeParticles.push(smokeMesh);
   }
@@ -122,7 +119,6 @@ export function initCinematicReplay(
   depotGroup.position.copy(depotTarget);
   replayGroup.add(depotGroup);
 
-  // Cruise Missile model
   const createMissileMesh = () => {
     const group = new THREE.Group();
     const bodyMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 });
@@ -181,7 +177,6 @@ export function initCinematicReplay(
     if (explodedMissiles.has(missileIdx)) return;
     explodedMissiles.add(missileIdx);
 
-    // If first missile, trigger depot destruction model swap
     if (!isDepotDestroyed) {
       isDepotDestroyed = true;
       intactBunker.visible = false;
@@ -234,22 +229,37 @@ export function initCinematicReplay(
       subGroup.position.copy(currentSubPos);
       subGroup.updateMatrixWorld(true);
 
-      // Animate smoke plumes if active
+      // Continuous smoke bubbling (runs whenever depot is destroyed, regardless of completion state)
       if (isDepotDestroyed) {
-        smokeParticles.forEach((sp, idx) => {
-          sp.position.y += 0.005;
-          sp.scale.addScalar(0.003);
+        smokeParticles.forEach((sp) => {
+          sp.position.y += 0.006;
+          sp.scale.addScalar(0.0035);
           const mat = sp.material as THREE.MeshBasicMaterial;
-          mat.opacity = Math.max(0, mat.opacity - 0.002);
-          if (sp.position.y > 1.2) {
-            sp.position.y = 0.3;
+          mat.opacity = Math.max(0, mat.opacity - 0.0025);
+          if (sp.position.y > 1.4) {
+            sp.position.y = 0.25;
+            sp.position.x = (Math.random() - 0.5) * 0.4;
+            sp.position.z = (Math.random() - 0.5) * 0.4;
             sp.scale.set(1, 1, 1);
-            mat.opacity = 0.6;
+            mat.opacity = 0.65;
           }
         });
       }
 
-      // --- 5. STAGGERED MISSILE FLIGHT & 6TH MISSILE TRACKING ---
+      // If animation has completed, unlock camera controls and return early
+      if (tSec >= playbackDuration) {
+        if (!hasCompleted) {
+          hasCompleted = true;
+          if (controls) controls.enabled = true;
+          if (onComplete) onComplete();
+        }
+        return;
+      }
+
+      if (controls) {
+        controls.enabled = false;
+      }
+
       let sixthMissilePos: THREE.Vector3 | null = null;
       let sixthMissileTangent = new THREE.Vector3(0, 0, 1);
       let leadMissilePos: THREE.Vector3 | null = null;
@@ -290,7 +300,6 @@ export function initCinematicReplay(
         missileMeshes.forEach(m => { m.visible = false; });
       }
 
-      // --- 6. VECTOR-BASED CINEMATIC CAMERA ---
       let targetCamPos = new THREE.Vector3();
       let targetLookAt = new THREE.Vector3();
 
@@ -302,7 +311,6 @@ export function initCinematicReplay(
       } else {
         const effectiveTSec = tSec - LAUNCH_DELAY_SEC;
         const effectiveDuration = playbackDuration - LAUNCH_DELAY_SEC;
-        const flightT = THREE.MathUtils.clamp(effectiveTSec / effectiveDuration, 0, 1);
 
         const activeMissilePos = sixthMissilePos || leadMissilePos;
 
@@ -311,13 +319,13 @@ export function initCinematicReplay(
           targetCamPos.copy(activeMissilePos).add(camOffset);
           targetLookAt.copy(activeMissilePos).add(sixthMissileTangent.clone().multiplyScalar(5.0));
         } else {
-          targetCamPos.copy(currentSubPos).lerp(impactTargetPos, flightT).add(new THREE.Vector3(0, 3.0, -4.0));
+          const fallbackT = THREE.MathUtils.clamp(effectiveTSec / effectiveDuration, 0, 1);
+          targetCamPos.copy(currentSubPos).lerp(impactTargetPos, fallbackT).add(new THREE.Vector3(0, 3.0, -4.0));
           targetLookAt.copy(impactTargetPos);
         }
       }
 
       if (controls) {
-        controls.enabled = false;
         camera.position.lerp(targetCamPos, 0.15);
         controls.target.lerp(targetLookAt, 0.15);
         controls.update();
@@ -327,11 +335,6 @@ export function initCinematicReplay(
         const currentLookAt = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).add(camera.position);
         currentLookAt.lerp(targetLookAt, 0.15);
         camera.lookAt(currentLookAt);
-      }
-
-      if (tSec >= playbackDuration && !hasCompleted) {
-        hasCompleted = true;
-        if (onComplete) onComplete();
       }
     },
     cleanup: () => {

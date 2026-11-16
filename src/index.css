@@ -52,6 +52,22 @@
   text-shadow: 0 0 6px rgba(34, 197, 94, 0.7), 0 0 18px rgba(34, 197, 94, 0.35);
 }
 
+/* 📰 Vintage Darkened Cream Newspaper Modal Styling */
+.news-modal-paper {
+  background-color: #d1c7aa !important; /* Darker vintage cream parchment */
+  color: #1c1917 !important;            /* Deep charcoal / near-black text for sharp contrast */
+  border: 2px solid #57534e;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.news-modal-paper h1,
+.news-modal-paper h2,
+.news-modal-paper h3,
+.news-modal-paper h4,
+.news-modal-paper strong {
+  color: #0c0a09 !important;
+}
+
 /* Optional CRT Scanline Overlay for viewports and terminal frames */
 .crt-scanlines {
   position: relative;

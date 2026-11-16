@@ -29,7 +29,6 @@ export const App: React.FC = () => {
   }, []);
 
   const handleLaunchCampaign = (payload: any) => {
-    // If the payload is a battle report, load it directly
     if (payload && payload.operationId) {
       setActiveBattleReport(payload);
       setShowNewspaper(false);
@@ -110,6 +109,7 @@ export const App: React.FC = () => {
         </div>
       )}
 
+      {/* DEFINITIVE ROOT MODAL MOUNT */}
       {showNewspaper && activeBattleReport && (
         <NewspaperModal
           report={activeBattleReport}
