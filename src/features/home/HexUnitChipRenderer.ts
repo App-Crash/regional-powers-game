@@ -83,7 +83,14 @@ export function renderStationedUnitChips(
     const vTop = new THREE.Vector3(pTop.x, pTop.y, pTop.z).sub(pCenter);
     const normal = new THREE.Vector3().crossVectors(vRight, vTop).normalize();
 
-    hexUnits.forEach((unit, index) => {
+    // Reorder units so the selected unit is always sorted to the end (top of stack)
+    const sortedUnits = [...hexUnits].sort((a, b) => {
+      if (a.id === selectedUnitId) return 1;
+      if (b.id === selectedUnitId) return -1;
+      return 0;
+    });
+
+    sortedUnits.forEach((unit, index) => {
       const isSelected = unit.id === selectedUnitId;
       // Increased size (1.4 x 0.8) and height offset to avoid z-fighting with infrastructure 3D models
       const elevation = 0.35 + index * 0.12;
