@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { initScene } from './SceneSetup';
 import { createHexGridGroup, rebuildHexGridFromData } from './HexGridLayer';
@@ -7,13 +7,15 @@ import { getCurvatureHeight, TERRAIN_ROTATION_X } from './CurvedTerrain';
 import { TheaterViewport } from './TheaterViewport';
 import { initializeTheaterScene } from '../../rendering/loadTheaterScene';
 import { createBorderTextureOverlay } from '../../rendering/CurvedBorderOverlay';
-import { HexDetailsModal } from '../../components/HexDetailsModal';
 import { stopSectorSound } from './sectorAudio';
 import type { HexData, RuntimeHexEntity } from './HexTypes';
 import { buildTheaterRegion, type TheaterRegion } from '../../services/factions/index';
 import type { useTheaterEditor } from '../editor/TheaterEditorState';
 import type { BattleReport } from '../../types/battleReport';
 import { initCinematicReplay } from './CinematicReplayManager';
+import { renderUnitAndHaloLayer, type HaloHexEntry } from '../orders/hexRangeMath';
+import { renderStationedUnitChips } from './HexUnitChipRenderer';
+import { type CombatUnit } from '../../types/unitOrders';
 
 interface CurvedEarthMapProps {
   activeRegion?: TheaterRegion;
@@ -33,6 +35,11 @@ interface CurvedEarthMapProps {
   onTimeUpdate?: (simClock: string, headline: string, note: string) => void;
   getHexWorldPos?: (hexId: string) => THREE.Vector3;
   orbitControlsRef?: React.RefObject<any>;
+  unitMarkerPos?: { q: number; r: number } | null;
+  haloHexes?: HaloHexEntry[];
+  selectedDestPos?: { q: number; r: number } | null;
+  allUnits?: CombatUnit[];
+  selectedUnitId?: string | null;
 }
 
 export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
@@ -43,6 +50,11 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
   activeBattleReport,
   onBattleComplete,
   onTimeUpdate,
+  unitMarkerPos = null,
+  haloHexes = [],
+  selectedDestPos = null,
+  allUnits = [],
+  selectedUnitId = null,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const layersRef = useRef(layers);
@@ -51,19 +63,19 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
   const gridGroupRef = useRef<THREE.Group | null>(null);
   const controlGroupRef = useRef<THREE.Group | null>(null);
   const structuresGroupRef = useRef<THREE.Group | null>(null);
-
-  const [selectedHex, setSelectedHex] = useState<HexData | RuntimeHexEntity | null>(null);
+  const haloGroupRef = useRef<THREE.Group | null>(null);
+  const unitStackGroupRef = useRef<THREE.Group | null>(null);
+  const bordersGroupRef = useRef<THREE.Group | null>(null);
 
   const editorRef = useRef(editor);
   editorRef.current = editor;
 
+  const onSelectHexRef = useRef(onSelectHex);
+  onSelectHexRef.current = onSelectHex;
+
   const getCombinedTheater = () => {
     const baseRegionalHexes = buildTheaterRegion(activeRegion);
-    return [
-      ...baseRegionalHexes,
-      ...editor.cities,
-      ...editor.fillerHexes,
-    ];
+    return [...baseRegionalHexes, ...editor.cities, ...editor.fillerHexes];
   };
 
   useEffect(() => {
@@ -75,42 +87,43 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
     }
   }, [editor.cities, editor.fillerHexes, activeRegion]);
 
+  // Re-render halos and unit markers instantly when unit markers, halo hexes, destinations, or selected unit changes
+  useEffect(() => {
+    if (!haloGroupRef.current) return;
+    renderUnitAndHaloLayer(haloGroupRef.current, unitMarkerPos, haloHexes, selectedDestPos);
+  }, [unitMarkerPos, haloHexes, selectedDestPos, selectedUnitId]);
+
+  useEffect(() => {
+    if (!unitStackGroupRef.current) return;
+    renderStationedUnitChips(unitStackGroupRef.current, allUnits, selectedUnitId);
+  }, [allUnits, selectedUnitId]);
+
   const handleSelectHex = (hex: HexData | RuntimeHexEntity | null) => {
     if (!hex) {
-      setSelectedHex(null);
       stopSectorSound();
-      if (onSelectHex) onSelectHex(null);
+      if (onSelectHexRef.current) onSelectHexRef.current(null);
       return;
+    }
+
+    console.log(`[CurvedEarthMap] Hex clicked: (${hex.q}, ${hex.r}) — opening sector inspection modal.`);
+    stopSectorSound();
+
+    if (onSelectHexRef.current) {
+      onSelectHexRef.current(hex);
     }
 
     const { mode, activeCityId, selectedSeedId, isPurgeMode } = editorRef.current;
-
-    if (mode === 'player') {
-      setSelectedHex(hex);
-      stopSectorSound();
-      if (onSelectHex) {
-        onSelectHex(hex);
+    if (mode !== 'player') {
+      if (isPurgeMode) {
+        editorRef.current.handlePurgeHex(hex.q, hex.r);
+      } else if (selectedSeedId) {
+        editorRef.current.handlePlaceSeed(hex.q, hex.r);
+      } else if (activeCityId) {
+        editorRef.current.handleMoveCity(hex.q, hex.r);
       }
-      return;
     }
-
-    if (isPurgeMode) {
-      editorRef.current.handlePurgeHex(hex.q, hex.r);
-      return;
-    }
-    if (selectedSeedId) {
-      editorRef.current.handlePlaceSeed(hex.q, hex.r);
-      return;
-    }
-    if (activeCityId) {
-      editorRef.current.handleMoveCity(hex.q, hex.r);
-      return;
-    }
-
-    editorRef.current.handleToggleHexControl(hex.q, hex.r);
   };
 
-  // Unified Scene Initialization and Render Loop
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -122,15 +135,12 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
 
     const planeWidth = 350;
     const planeHeight = 350;
-
     const tileMapGroup = new THREE.Group();
     tileMapGroup.name = 'TileMapGroup';
-    tileMapGroup.position.set(0, 0, 0);
 
     const textureLoader = new THREE.TextureLoader();
     const totalCols = 16;
     const totalRows = 16;
-
     const subWidth = planeWidth / totalCols;
     const subHeight = planeHeight / totalRows;
     const rotX = TERRAIN_ROTATION_X;
@@ -138,14 +148,15 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
     activeTiles.forEach(({ col, row, path }) => {
       const tileTexture = textureLoader.load(
         path,
-        (tex) => { tex.colorSpace = THREE.SRGBColorSpace; },
+        (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+        },
         undefined,
         () => console.warn(`Tile texture ${path} not found.`)
       );
 
       const subGeo = new THREE.PlaneGeometry(subWidth, subHeight, 16, 16);
       const subPos = subGeo.attributes.position;
-
       const xOffset = (col - totalCols / 2 + 0.5) * subWidth;
       const yOffset = (totalRows / 2 - 0.5 - row) * subHeight;
 
@@ -156,7 +167,6 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
 
         const rotatedY = vy * Math.cos(rotX) - vz * Math.sin(rotX);
         const rotatedZ = vy * Math.sin(rotX) + vz * Math.cos(rotX);
-
         subPos.setXYZ(i, vx, rotatedY, rotatedZ);
       }
       subGeo.computeVertexNormals();
@@ -170,8 +180,7 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
         opacity: 0.95,
       });
 
-      const tileMesh = new THREE.Mesh(subGeo, subMat);
-      tileMapGroup.add(tileMesh);
+      tileMapGroup.add(new THREE.Mesh(subGeo, subMat));
     });
 
     scene.add(tileMapGroup);
@@ -182,12 +191,11 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
     scene.add(structuresGroup);
 
     const initialTheater = getCombinedTheater();
+    initializeTheaterScene(structuresGroup, initialTheater);
 
-    initializeTheaterScene(structuresGroup, initialTheater).then((registry) => {
-      console.log('[CurvedEarthMap] Theater structures initialized:', Object.keys(registry).length, 'hubs loaded.');
-    });
-
+    // Use stable border stencil helper
     const bordersGroup = createBorderTextureOverlay('/assets/colombia_border_stencil.png', -4, 9);
+    bordersGroupRef.current = bordersGroup;
     scene.add(bordersGroup);
 
     const { gridGroup, controlGroup } = createHexGridGroup();
@@ -197,6 +205,18 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
 
     rebuildHexGridFromData(gridGroup, controlGroup, initialTheater);
 
+    const haloGroup = new THREE.Group();
+    haloGroup.name = 'UnitRangeHaloLayer';
+    haloGroupRef.current = haloGroup;
+    scene.add(haloGroup);
+    renderUnitAndHaloLayer(haloGroup, unitMarkerPos, haloHexes, selectedDestPos);
+
+    const unitStackGroup = new THREE.Group();
+    unitStackGroup.name = 'UnitStackLayer';
+    unitStackGroupRef.current = unitStackGroup;
+    scene.add(unitStackGroup);
+    renderStationedUnitChips(unitStackGroup, allUnits, selectedUnitId);
+
     const cleanupSelection = setupHexSelection(
       renderer.domElement,
       camera,
@@ -205,7 +225,6 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
       (hex) => handleSelectHex(hex)
     );
 
-    // Initialize Cinematic Replay Manager if battle report is active
     let replayHandle: any = null;
     const clock = new THREE.Clock();
 
@@ -217,16 +236,16 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
 
-      // Layer visibility states
       structuresGroup.visible = layersRef.current.milUnits || layersRef.current.econ;
-      bordersGroup.visible = layersRef.current.borders ?? layersRef.current.politicalControl;
+      if (bordersGroupRef.current) {
+        bordersGroupRef.current.visible = layersRef.current.borders ?? layersRef.current.politicalControl;
+      }
       gridGroup.visible = layersRef.current.hexGrid;
       controlGroup.visible = layersRef.current.politicalControl;
       tileMapGroup.visible = layersRef.current.topology || layersRef.current.hexGrid;
 
       if (replayHandle) {
-        const tSec = clock.getElapsedTime();
-        replayHandle.update(tSec, camera as THREE.PerspectiveCamera, controls);
+        replayHandle.update(clock.getElapsedTime(), camera as THREE.PerspectiveCamera, controls);
       }
 
       controls.update();
@@ -256,17 +275,8 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
   }, [activeBattleReport]);
 
   return (
-    <div className="relative w-full h-screen bg-slate-950 select-none overflow-hidden">
-      <div ref={containerRef} className="absolute inset-0 w-full h-full" />
-
-      <div className="absolute inset-0 pointer-events-none z-50">
-        <div className="pointer-events-auto">
-          <HexDetailsModal
-            selectedHex={selectedHex}
-            onClose={() => handleSelectHex(null)}
-          />
-        </div>
-      </div>
+    <div className="relative w-full h-full bg-slate-950 select-none overflow-hidden">
+      <div ref={containerRef} className="w-full h-full" />
     </div>
   );
 };

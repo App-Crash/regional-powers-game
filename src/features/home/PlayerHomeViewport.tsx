@@ -9,6 +9,8 @@ import { getEraThemeConfig } from '../../services/theater/eraConfig';
 import type { useTheaterEditor } from '../editor/TheaterEditorState';
 import { type BattleReport } from '../../types/battleReport';
 import { MOCK_CARACAS_REPORT } from '../../data/mockOperationCaracas';
+import { useUnitOrders } from '../orders/useUnitOrders';
+import { UnitStatsHUD } from '../orders/UnitStatsHUD';
 
 interface PlayerHomeViewportProps {
   editor: ReturnType<typeof useTheaterEditor>;
@@ -18,23 +20,21 @@ interface PlayerHomeViewportProps {
   onTimeUpdate?: (simClock: string, headline: string, note: string) => void;
 }
 
-export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({ 
-  editor, 
+export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({
+  editor,
   onLaunchCampaign,
   activeBattleReport,
   onBattleComplete,
-  onTimeUpdate
+  onTimeUpdate,
 }) => {
   const theater = useMemo(() => new TheaterViewport(), []);
   const orbitControlsRef = useRef<any>(null);
+  const orders = useUnitOrders();
 
   const era = 'cold_war_1983';
   const theme = useMemo(() => getEraThemeConfig(era), [era]);
 
-  const [regionalHexes] = useState<RuntimeHexEntity[]>(() =>
-    buildTheaterRegion('SA')
-  );
-
+  const [regionalHexes] = useState<RuntimeHexEntity[]>(() => buildTheaterRegion('SA'));
   const [layers, setLayers] = useState({
     hexGrid: true,
     topology: true,
@@ -45,13 +45,37 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({
     borders: true,
   });
 
-  const [selectedHex, setSelectedHex] = useState<RuntimeHexEntity | null>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  // Diagnostic refs to verify bounding boxes
+  const telemetryRef = useRef<HTMLDivElement>(null);
+  const dossierRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (telemetryRef.current) {
+      const rect = telemetryRef.current.getBoundingClientRect();
+      console.log(`[Layout Diagnostic] Telemetry Menu Rect:`, { top: rect.top, right: rect.right, width: rect.width, height: rect.height });
+    }
+  }, [activeDropdown]);
+
+  useEffect(() => {
+    if (dossierRef.current && orders.inspectedHex) {
+      const rect = dossierRef.current.getBoundingClientRect();
+      console.log(`[Layout Diagnostic] Sector Dossier Rect:`, { top: rect.top, left: rect.left, width: rect.width, height: rect.height });
+    }
+  }, [orders.inspectedHex]);
+
+  useEffect(() => {
+    console.log(`[State Diagnostic] orders.activeUnit changed:`, orders.activeUnit);
+  }, [orders.activeUnit]);
+
+  useEffect(() => {
+    console.log(`[State Diagnostic] orders.inspectedHex changed:`, orders.inspectedHex);
+  }, [orders.inspectedHex]);
 
   useEffect(() => {
     const handleExecute = () => {
       if (onLaunchCampaign) {
-        // Launch the mock Caracas 3D cinematic battle report scenario
         onLaunchCampaign(MOCK_CARACAS_REPORT);
       }
     };
@@ -63,13 +87,22 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({
 
   const handleSelectHex = (hex: RuntimeHexEntity | null) => {
     if (!hex) {
-      setSelectedHex(null);
+      console.log(`[Layout Diagnostics] Sector Dossier closed (null hex).`);
+      orders.inspectHex(null);
       stopSectorSound();
       return;
     }
 
+    console.log(`[Layout Diagnostics] Sector Dossier opening for hex:`, { q: hex.q, r: hex.r, name: hex.sett_name });
     playSoundForHex(hex);
-    setSelectedHex(hex);
+
+    if (editor.mode === 'player' && orders.phase !== 'IDLE' && orders.activeUnit) {
+      if (orders.handleDestinationClick(hex)) {
+        return;
+      }
+    }
+
+    orders.inspectHex(hex);
   };
 
   const toggleLayer = (key: keyof typeof layers) => {
@@ -87,126 +120,159 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({
       'HEX-VEN-CARACAS-OUTSKIRTS': [0.2, 0.7, -0.8],
       'HEX-VEN-MIRAFLORES-COMPOUND': [0.4, 0.75, -1.0],
     };
-
     const coords = coordinateMap[hexId];
-    if (coords) {
-      return new THREE.Vector3(...coords);
-    }
-    
-    return new THREE.Vector3(0, 0.5, 0);
+    return coords ? new THREE.Vector3(...coords) : new THREE.Vector3(0, 0.5, 0);
   }, []);
 
-  const getControlBadge = (control: RuntimeHexEntity['fac_ctl']) => {
-    switch (control) {
-      case 'ven':
-      case 'col':
-        return <span className={`${theme.accentText} font-bold tracking-widest uppercase`}>[{control}]</span>;
-      case 'bra':
-        return <span className="text-cyan-400 font-bold tracking-widest">[REGIONAL // BRA]</span>;
-      case null:
-      default:
-        return <span className="text-slate-500 font-bold tracking-widest">[DEEP WATER / UNCLAIMED]</span>;
-    }
-  };
-
   const activeTiles = theater.getActiveTiles();
+  const hexUnits = orders.inspectedHex ? orders.getUnitsAtHex(orders.inspectedHex.q, orders.inspectedHex.r) : [];
 
   return (
-    <div className={`w-full h-full overflow-hidden flex flex-col select-none relative ${theme.containerClasses}`}>
-      
-      {/* Floating Telemetry & Grid Stats Overlay */}
-      <div className="absolute top-4 right-4 z-20 flex items-center gap-3 text-xs md:text-sm tracking-wider font-mono pointer-events-auto">
-        <div className={`hidden lg:flex items-center gap-1.5 bg-black/80 backdrop-blur px-3 py-1.5 rounded border ${theme.borderAccent}`}>
-          <span className="opacity-70">GRID:</span>
-          <span>{activeTiles.length + regionalHexes.length} TILES</span>
-        </div>
-        <div className={`hidden lg:flex items-center gap-1.5 bg-black/80 backdrop-blur px-3 py-1.5 rounded border ${theme.borderAccent}`}>
-          <span className="opacity-70">SA SECTORS:</span>
-          <span>{regionalHexes.length}</span>
-        </div>
-
-        {/* Telemetry Layers Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setActiveDropdown(activeDropdown === 'layers' ? null : 'layers')}
-            className={`px-3 py-1.5 bg-black/80 hover:bg-black rounded transition border ${theme.borderAccent} cursor-pointer font-bold shadow-lg`}
-          >
-            [ TELEMETRY LAYERS ▾ ]
-          </button>
-          {activeDropdown === 'layers' && (
-            <div className={`absolute top-full right-0 mt-1 w-56 bg-slate-950 border-2 ${theme.borderAccent} rounded shadow-2xl py-1 z-50 flex flex-col text-sm`}>
-              {(Object.keys(layers) as Array<keyof typeof layers>).map((key) => (
-                <button
-                  key={key}
-                  onClick={() => toggleLayer(key)}
-                  className="px-4 py-2 text-left hover:bg-white/5 flex items-center justify-between uppercase cursor-pointer"
-                >
-                  <span>{key}</span>
-                  <span className={layers[key] ? 'font-bold text-emerald-400' : 'text-slate-600'}>
-                    {layers[key] ? 'ACTIVE' : 'STANDBY'}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Main Map Viewport */}
-      <main className="relative w-full h-full overflow-hidden bg-black">
-        <CurvedEarthMap 
-          activeRegion="SA" 
-          layers={layers} 
-          editor={editor} 
-          onSelectHex={handleSelectHex} 
+    <div className={`w-full h-full overflow-hidden relative ${theme.containerClasses}`}>
+      {/* Background 3D Map Viewport (Fills entire screen) */}
+      <div className="absolute inset-0 w-full h-full bg-black z-0">
+        <CurvedEarthMap
+          activeRegion="SA"
+          layers={layers}
+          editor={editor}
+          onSelectHex={handleSelectHex}
           activeBattleReport={activeBattleReport}
           onBattleComplete={onBattleComplete}
           onTimeUpdate={onTimeUpdate}
           getHexWorldPos={getHexWorldPos}
           orbitControlsRef={orbitControlsRef}
+          unitMarkerPos={orders.activeUnit ? { q: orders.activeUnit.q, r: orders.activeUnit.r } : null}
+          haloHexes={orders.haloHexes}
+          selectedDestPos={orders.destinationHex ? { q: orders.destinationHex.q, r: orders.destinationHex.r } : null}
+          allUnits={orders.units}
+          selectedUnitId={orders.activeUnit?.id || null}
         />
+      </div>
 
-        {selectedHex && !activeBattleReport && (
-          <div className={`absolute top-4 left-4 z-30 w-80 min-w-[280px] bg-slate-950 border-2 ${theme.borderAccent} rounded shadow-2xl p-4 flex flex-col gap-3 select-none font-mono`}>
-            <div className={`flex items-center justify-between border-b ${theme.borderAccent} pb-2`}>
-              <span className="font-bold tracking-widest">
-                SECTOR [{selectedHex.q}, {selectedHex.r}]
+      {/* Foreground UI Layer (CSS Grid Overlay with pointer-events-none, panels re-enable pointer-events-auto) */}
+      <div className="absolute inset-0 z-30 pointer-events-none grid grid-cols-12 grid-rows-12 p-4 gap-4 select-none">
+        
+        {/* 1. TOP-RIGHT TELEMETRY LAYERS MENU (Row 1, Cols 9-12) */}
+        <div ref={telemetryRef} className="col-start-9 col-span-4 row-start-1 flex items-start justify-end gap-3 text-xs md:text-sm tracking-wider font-mono pointer-events-auto">
+          <div className={`hidden lg:flex items-center gap-1.5 bg-black/80 backdrop-blur px-3 py-1.5 rounded border ${theme.borderAccent} h-fit`}>
+            <span className="opacity-70">GRID:</span>
+            <span>{activeTiles.length + regionalHexes.length} TILES</span>
+          </div>
+
+          <div className="relative">
+            <button
+              onClick={() => setActiveDropdown(activeDropdown === 'layers' ? null : 'layers')}
+              className={`px-3 py-1.5 bg-black/80 hover:bg-black rounded transition border ${theme.borderAccent} cursor-pointer font-bold shadow-lg`}
+            >
+              [ TELEMETRY LAYERS ▾ ]
+            </button>
+            {activeDropdown === 'layers' && (
+              <div className={`absolute top-full right-0 mt-1 w-56 bg-slate-950 border-2 ${theme.borderAccent} rounded shadow-2xl py-1 z-50 flex flex-col text-sm`}>
+                {(Object.keys(layers) as Array<keyof typeof layers>).map((key) => (
+                  <button
+                    key={key}
+                    onClick={() => toggleLayer(key)}
+                    className="px-4 py-2 text-left hover:bg-white/5 flex items-center justify-between uppercase cursor-pointer"
+                  >
+                    <span>{key}</span>
+                    <span className={layers[key] ? 'font-bold text-emerald-400' : 'text-slate-600'}>
+                      {layers[key] ? 'ACTIVE' : 'STANDBY'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 2. BOTTOM-LEFT SECTOR INSPECTOR DOSSIER (Row 4-12, Cols 1-4) */}
+        {orders.inspectedHex && !activeBattleReport && (
+          <div ref={dossierRef} className="col-start-1 col-span-4 row-start-4 row-span-8 self-end w-80 bg-black/90 backdrop-blur-md px-4 py-3 shadow-2xl flex flex-col gap-2.5 font-mono text-xs text-slate-200 pointer-events-auto border-l-2 border-sky-500 max-h-[70vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-white/10 pb-2">
+              <span className="font-bold tracking-widest text-sky-400">
+                SECTOR DOSSIER [{orders.inspectedHex.q}, {orders.inspectedHex.r}]
               </span>
+
               <button
-                onClick={() => setSelectedHex(null)}
-                className={`text-xs px-2 py-0.5 rounded bg-black border ${theme.borderAccent} transition cursor-pointer`}
+                onClick={() => {
+                  console.log(`[Layout Diagnostics] Sector Dossier closed by user.`);
+                  orders.inspectHex(null);
+                }}
+                className="text-[10px] px-2 py-0.5 bg-slate-900 hover:bg-rose-950 text-slate-400 hover:text-rose-200 transition cursor-pointer"
               >
                 [CLOSE]
               </button>
             </div>
 
-            <div className="flex flex-col gap-2 text-sm">
-              {selectedHex.sett_name && (
-                <div className="flex justify-between py-1 px-2 rounded bg-black/60 border border-white/10">
-                  <span className="opacity-70">DESIGNATION:</span>
-                  <span className="font-bold uppercase">{selectedHex.sett_name}</span>
+            <div className="flex flex-col gap-1.5">
+              {orders.inspectedHex.sett_name && (
+                <div className="flex justify-between py-1 px-2 bg-white/5">
+                  <span className="opacity-60">DESIGNATION:</span>
+                  <span className="font-bold text-white uppercase">{orders.inspectedHex.sett_name}</span>
                 </div>
               )}
-              <div className="flex justify-between py-1 px-2 rounded bg-black/60 border border-white/10">
-                <span className="opacity-70">STATUS:</span>
-                <span>{getControlBadge(selectedHex.fac_ctl)}</span>
+              <div className="flex justify-between py-1 px-2 bg-white/5">
+                <span className="opacity-60">FACTION:</span>
+                <span className="font-bold text-sky-300 uppercase">{orders.inspectedHex.fac_ctl || 'UNCLAIMED'}</span>
               </div>
-              <div className="flex justify-between py-1 px-2 rounded bg-black/60 border border-white/10">
-                <span className="opacity-70">TERRAIN:</span>
-                <span className="font-bold uppercase">{selectedHex.terrain}</span>
+              <div className="flex justify-between py-1 px-2 bg-white/5">
+                <span className="opacity-60">TERRAIN:</span>
+                <span className="font-bold uppercase">{orders.inspectedHex.terrain}</span>
               </div>
-              <div className="flex justify-between py-1 px-2 rounded bg-black/60 border border-white/10">
-                <span className="opacity-70">INFRASTRUCTURE:</span>
-                <span className="font-bold">TIER {selectedHex.infra} / 9</span>
+              <div className="flex justify-between py-1 px-2 bg-white/5">
+                <span className="opacity-60">INFRASTRUCTURE:</span>
+                <span className="font-bold text-emerald-400">TIER {orders.inspectedHex.infra} / 9</span>
               </div>
-              <div className="flex justify-between py-1 px-2 rounded bg-black/60 border border-white/10">
-                <span className="opacity-70">POPULATION:</span>
-                <span>{selectedHex.population.toLocaleString()}</span>
+              <div className="flex justify-between py-1 px-2 bg-white/5">
+                <span className="opacity-60">POPULATION:</span>
+                <span>{orders.inspectedHex.population.toLocaleString()}</span>
               </div>
+            </div>
+
+            {/* Stationed Units Roster summary inside Sector Inspector */}
+            <div className="border-t border-white/10 pt-2 flex flex-col gap-1.5">
+              <div className="text-[10px] text-sky-400 font-bold uppercase tracking-wider">
+                Garrisoned Forces ({hexUnits.length})
+              </div>
+              {hexUnits.length === 0 ? (
+                <div className="text-[10px] text-slate-500 italic">No military units garrisoned.</div>
+              ) : (
+                hexUnits.map((unit) => (
+                  <button
+                    key={unit.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log(`[Diagnostic] Garrison unit button clicked:`, unit);
+                      
+                      // 1. Select the unit to update activeUnit state and open UnitStatsHUD
+                      orders.selectUnit(unit.id);
+
+                      // 2. Retain the exact current inspectedHex so the dossier modal stays intact
+                      if (orders.inspectedHex) {
+                        orders.inspectHex(orders.inspectedHex);
+                      }
+                    }}
+                    className={`w-full py-1.5 px-2 text-left bg-slate-900/80 hover:bg-slate-800 flex justify-between items-center transition cursor-pointer ${
+                      orders.activeUnit?.id === unit.id ? 'border-l-2 border-sky-400 text-sky-200' : 'text-slate-300'
+                    }`}
+                  >
+                    <span className="font-bold">{unit.name}</span>
+                    <span className="text-[10px] text-emerald-400">{unit.readiness}% RDY</span>
+                  </button>
+                ))
+              )}
             </div>
           </div>
         )}
-      </main>
+
+        {/* 3. BOTTOM-RIGHT UNIT SUMMARY & ORDERS CARD (Row 8-12, Cols 9-12) */}
+        {editor.mode === 'player' && !activeBattleReport && (
+          <div className="col-start-9 col-span-4 row-start-8 row-span-5 self-end justify-self-end pointer-events-auto">
+            <UnitStatsHUD orders={orders} />
+          </div>
+        )}
+
+      </div>
     </div>
   );
 };
