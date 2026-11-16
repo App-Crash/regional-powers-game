@@ -78,22 +78,58 @@ export function initCinematicReplay(
   subGroup.position.copy(subStart);
   replayGroup.add(subGroup);
 
+  // Target Depot Complex (Intact vs Collapsed state)
   const depotGroup = new THREE.Group();
-  const bunker = new THREE.Mesh(
+  const intactBunker = new THREE.Mesh(
     new THREE.BoxGeometry(1.0, 0.5, 1.0),
     new THREE.MeshStandardMaterial({ color: 0x475569, roughness: 0.5, metalness: 0.3 })
   );
-  bunker.position.y = 0.25;
-  depotGroup.add(bunker);
+  intactBunker.position.y = 0.25;
+  depotGroup.add(intactBunker);
+
+  // Collapsed roof pieces (initially hidden)
+  const rubbleMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.8, metalness: 0.2 });
+  
+  const roofSlab1 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.08, 0.9), rubbleMat);
+  roofSlab1.position.set(-0.2, 0.15, 0);
+  roofSlab1.rotation.z = 0.35;
+  roofSlab1.rotation.x = 0.2;
+  roofSlab1.visible = false;
+
+  const roofSlab2 = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.08, 0.9), rubbleMat);
+  roofSlab2.position.set(0.2, 0.15, 0);
+  roofSlab2.rotation.z = -0.35;
+  roofSlab2.rotation.x = -0.15;
+  roofSlab2.visible = false;
+
+  depotGroup.add(roofSlab1, roofSlab2);
+
+  // Smoke Plumes group (initially hidden)
+  const smokeGroup = new THREE.Group();
+  smokeGroup.visible = false;
+  const smokeParticles: THREE.Mesh[] = [];
+  for (let p = 0; p < 4; p++) {
+    const smokeMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.25, 8, 8),
+      new THREE.MeshBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.6 })
+    );
+    smokeMesh.position.set((Math.random() - 0.5) * 0.4, 0.3 + p * 0.2, (Math.random() - 0.5) * 0.4);
+    smokeGroup.add(smokeMesh);
+    smokeParticles.push(smokeMesh);
+  }
+  depotGroup.add(smokeGroup);
+
   depotGroup.position.copy(depotTarget);
   replayGroup.add(depotGroup);
 
-  // Detailed Cruise Missiles with Blue/White Exhaust Plume
+  // Cruise Missile model
   const createMissileMesh = () => {
     const group = new THREE.Group();
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 });
+
     const body = new THREE.Mesh(
       new THREE.CylinderGeometry(0.04, 0.04, 0.5, 8),
-      new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 })
+      bodyMat
     );
     body.rotation.x = Math.PI / 2;
 
@@ -103,6 +139,15 @@ export function initCinematicReplay(
     );
     nose.rotation.x = Math.PI / 2;
     nose.position.z = 0.32;
+
+    const mainWingHoriz = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.015, 0.18), bodyMat);
+    mainWingHoriz.position.set(0, 0, 0.0);
+
+    const tailFinHoriz = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.01, 0.08), bodyMat);
+    tailFinHoriz.position.set(0, 0, -0.2);
+
+    const tailFinVertTop = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.125, 0.08), bodyMat);
+    tailFinVertTop.position.set(0, 0.0625, -0.2);
 
     const flameGeo = new THREE.ConeGeometry(0.05, 0.3, 8);
     flameGeo.rotateX(-Math.PI / 2);
@@ -117,7 +162,7 @@ export function initCinematicReplay(
     innerFlame.rotateX(-Math.PI / 2);
     innerFlame.position.z = -0.3;
 
-    group.add(body, nose, flame, innerFlame);
+    group.add(body, nose, mainWingHoriz, tailFinHoriz, tailFinVertTop, flame, innerFlame);
     return group;
   };
 
@@ -130,9 +175,20 @@ export function initCinematicReplay(
 
   const impactTargetPos = depotTarget.clone().add(new THREE.Vector3(0, 0.5, 0));
   const explodedMissiles = new Set<number>();
+  let isDepotDestroyed = false;
+
   const triggerImpactExplosion = (missileIdx: number, impactPos: THREE.Vector3) => {
     if (explodedMissiles.has(missileIdx)) return;
     explodedMissiles.add(missileIdx);
+
+    // If first missile, trigger depot destruction model swap
+    if (!isDepotDestroyed) {
+      isDepotDestroyed = true;
+      intactBunker.visible = false;
+      roofSlab1.visible = true;
+      roofSlab2.visible = true;
+      smokeGroup.visible = true;
+    }
 
     const flash = new THREE.Mesh(
       new THREE.SphereGeometry(0.4, 16, 16),
@@ -157,8 +213,8 @@ export function initCinematicReplay(
   };
 
   let hasCompleted = false;
-  const playbackDuration = 15.0;
-  const LAUNCH_DELAY_SEC = 2.8;
+  const playbackDuration = 20.0;
+  const LAUNCH_DELAY_SEC = 3.5;
 
   return {
     update: (tSec: number, camera: THREE.PerspectiveCamera, controls?: any) => {
@@ -177,6 +233,21 @@ export function initCinematicReplay(
       const currentSubPos = subStart.clone().add(new THREE.Vector3(0, subSwell, 0));
       subGroup.position.copy(currentSubPos);
       subGroup.updateMatrixWorld(true);
+
+      // Animate smoke plumes if active
+      if (isDepotDestroyed) {
+        smokeParticles.forEach((sp, idx) => {
+          sp.position.y += 0.005;
+          sp.scale.addScalar(0.003);
+          const mat = sp.material as THREE.MeshBasicMaterial;
+          mat.opacity = Math.max(0, mat.opacity - 0.002);
+          if (sp.position.y > 1.2) {
+            sp.position.y = 0.3;
+            sp.scale.set(1, 1, 1);
+            mat.opacity = 0.6;
+          }
+        });
+      }
 
       // --- 5. STAGGERED MISSILE FLIGHT & 6TH MISSILE TRACKING ---
       let sixthMissilePos: THREE.Vector3 | null = null;
@@ -219,19 +290,16 @@ export function initCinematicReplay(
         missileMeshes.forEach(m => { m.visible = false; });
       }
 
-      // --- 6. VECTOR-BASED CINEMATIC CAMERA (NORTH LOOKING SOUTH TOWARD DEPOT) ---
+      // --- 6. VECTOR-BASED CINEMATIC CAMERA ---
       let targetCamPos = new THREE.Vector3();
       let targetLookAt = new THREE.Vector3();
 
-      // Compute vector from sub to depot (South / forward path)
       const vectorToDepot = depotTarget.clone().sub(currentSubPos).normalize();
 
       if (tSec < LAUNCH_DELAY_SEC) {
-        // Pre-launch hold: Positioned North (backward along the path away from depot) looking South at the sub
         targetCamPos.copy(currentSubPos).sub(vectorToDepot.clone().multiplyScalar(4.5));
         targetLookAt.copy(currentSubPos);
       } else {
-        // Flight phase: smooth transition behind the missiles
         const effectiveTSec = tSec - LAUNCH_DELAY_SEC;
         const effectiveDuration = playbackDuration - LAUNCH_DELAY_SEC;
         const flightT = THREE.MathUtils.clamp(effectiveTSec / effectiveDuration, 0, 1);
@@ -248,7 +316,6 @@ export function initCinematicReplay(
         }
       }
 
-      // Smooth interpolation
       if (controls) {
         controls.enabled = false;
         camera.position.lerp(targetCamPos, 0.15);
