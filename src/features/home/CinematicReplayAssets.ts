@@ -66,19 +66,18 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
   const coastalWaypoint = subStart.clone().lerp(depotTarget, 0.35).setY(13.5);
   const mountainWaypoint = subStart.clone().lerp(depotTarget, 0.65).setY(10.0);
 
-  // --- 3. UNIFIED SINGLE-FILE MISSILE SPLINES (Vertical Pop-up Built into Curve) ---
+  // --- 3. UNIFIED SINGLE-FILE MISSILE SPLINES ---
   const missileCurves = Array.from({ length: 6 }, (_, i: number) => {
-    // Single clean longitudinal line along the submarine's deck axis (Z offset)
     const deckOffset = new THREE.Vector3(0, 0, (i - 2.5) * 0.28);
     const tubeExitPos = subStart.clone().add(deckOffset);
     const verticalApogeePos = subStart.clone().add(new THREE.Vector3(0, 4.5, 0)).add(deckOffset);
 
     const pts = [
-      tubeExitPos,                                   // P0: Stowed inside VLS tube
-      verticalApogeePos,                             // P1: Vertical pop-up / apogee point
-      coastalWaypoint.clone().add(deckOffset),       // P2: Pitch-over / coastal transit
-      mountainWaypoint.clone().add(deckOffset),      // P3: Mountain clearance
-      depotTarget.clone().add(deckOffset.multiplyScalar(0.2)), // P4: Target impact
+      tubeExitPos,
+      verticalApogeePos,
+      coastalWaypoint.clone().add(deckOffset),
+      mountainWaypoint.clone().add(deckOffset),
+      depotTarget.clone().add(deckOffset.multiplyScalar(0.2)),
     ];
     return new THREE.CatmullRomCurve3(pts);
   });
@@ -145,7 +144,7 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
   depotGroup.position.copy(depotTarget);
   replayGroup.add(depotGroup);
 
-  // --- 7. DETAILED MISSILE MESH ---
+  // --- 7. DETAILED MISSILE MESH (Pivot-nested wings for 100% recessed in-tube stowing) ---
   const createMissileMesh = (): THREE.Group => {
     const group = new THREE.Group();
     const bodyMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 });
@@ -160,25 +159,35 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
     nose.rotation.x = Math.PI / 2;
     nose.position.z = 0.32;
 
+    // Left Wing Pivot & Mesh (Stowed scale.x = 0.001 fully collapsed inside body hull)
     const leftWingPivot = new THREE.Group();
-    leftWingPivot.position.set(-0.02, 0, 0.02);
-    const leftWing = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.012, 0.16), bodyMat);
-    leftWing.position.set(-0.16, 0, 0);
+    leftWingPivot.position.set(-0.03, 0, 0);
+    const leftWing = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.012, 0.16), bodyMat);
+    leftWing.position.set(-0.13, 0, 0);
     leftWingPivot.add(leftWing);
 
+    // Right Wing Pivot & Mesh
     const rightWingPivot = new THREE.Group();
-    rightWingPivot.position.set(0.02, 0, 0.02);
-    const rightWing = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.012, 0.16), bodyMat);
-    rightWing.position.set(0.16, 0, 0);
+    rightWingPivot.position.set(0.03, 0, 0);
+    const rightWing = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.012, 0.16), bodyMat);
+    rightWing.position.set(0.13, 0, 0);
     rightWingPivot.add(rightWing);
 
-    const stage1Smoke = new THREE.Mesh(
-      new THREE.ConeGeometry(0.08, 0.4, 8),
-      new THREE.MeshBasicMaterial({ color: 0xf8fafc, transparent: true, opacity: 0.85 })
-    );
-    stage1Smoke.rotateX(-Math.PI / 2);
-    stage1Smoke.position.z = -0.4;
+    // Stage 1 Cold-Launch Large Opaque Gray Smoke Bubbles
+    const stage1SmokeGroup = new THREE.Group();
+    stage1SmokeGroup.position.set(0, 0, -0.35);
+    const smokeMat = new THREE.MeshStandardMaterial({ color: 0x71717a, roughness: 0.9, metalness: 0.1, transparent: true, opacity: 0.95 });
+    
+    const bubble1 = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), smokeMat);
+    bubble1.position.set(0, 0, -0.05);
+    const bubble2 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), smokeMat);
+    bubble2.position.set(0.06, 0.04, -0.12);
+    const bubble3 = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), smokeMat);
+    bubble3.position.set(-0.06, -0.04, -0.15);
+    stage1SmokeGroup.add(bubble1, bubble2, bubble3);
+    stage1SmokeGroup.name = 'stage1SmokeGroup';
 
+    // Stage 3 Sustainer Main Motor Flame
     const sustainerFlame = new THREE.Mesh(
       new THREE.ConeGeometry(0.06, 0.35, 8),
       new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.95 })
@@ -187,8 +196,8 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
     sustainerFlame.position.z = -0.38;
     sustainerFlame.visible = false;
 
-    group.add(body, nose, leftWingPivot, rightWingPivot, stage1Smoke, sustainerFlame);
-    group.userData = { leftWingPivot, rightWingPivot, stage1Smoke, sustainerFlame };
+    group.add(body, nose, leftWingPivot, rightWingPivot, stage1SmokeGroup, sustainerFlame);
+    group.userData = { leftWingPivot, rightWingPivot, stage1SmokeGroup, sustainerFlame };
     return group;
   };
 

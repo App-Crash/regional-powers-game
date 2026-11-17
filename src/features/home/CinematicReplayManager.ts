@@ -60,11 +60,11 @@ export function initCinematicReplay(
       assets.subGroup.visible = true;
       assets.subGroup.updateMatrixWorld(true);
 
-      // --- PHASE 1: UNIFIED SINGLE-FILE MISSILE SALVO ---
+      // --- PHASE 1: UNIFIED SINGLE-FILE MISSILE SALVO WITH ACCELERATION MATH ---
       let sixthMissilePos: THREE.Vector3 | null = null;
       let sixthMissileTangent = new THREE.Vector3(0, 0, 1);
       let leadMissilePos: THREE.Vector3 | null = null;
-      let hasAnyMissileReachedFlight = false;
+      let latestActiveMissilePos: THREE.Vector3 | null = null;
 
       assets.missileMeshes.forEach((m, idx) => {
         const missileStartT = MISSILE_LAUNCH_START_SEC + (idx * 0.5); 
@@ -77,36 +77,40 @@ export function initCinematicReplay(
           const localNormalizedT = tLocal / MISSILE_FLIGHT_DURATION;
           const clampedT = THREE.MathUtils.clamp(localNormalizedT, 0, 1);
 
-          // Evaluate position and tangent uniformly along the CatmullRom curve
+          const acceleratedT = Math.pow(clampedT, 1.8);
+
           const curve = assets.missileCurves[idx];
-          const pos = curve.getPointAt(clampedT);
-          const tangent = curve.getTangentAt(clampedT);
+          const pos = curve.getPointAt(acceleratedT);
+          const tangent = curve.getTangentAt(acceleratedT);
 
           const leftWingPivot = m.userData.leftWingPivot as THREE.Group;
           const rightWingPivot = m.userData.rightWingPivot as THREE.Group;
-          const stage1Smoke = m.userData.stage1Smoke as THREE.Mesh;
+          const stage1SmokeGroup = m.userData.stage1SmokeGroup as THREE.Group;
           const sustainerFlame = m.userData.sustainerFlame as THREE.Mesh;
 
           if (clampedT < 0.22) {
-            // STAGE 1: COLD-LAUNCH EJECTION (First portion of curve = vertical pop-up)
-            if (leftWingPivot) leftWingPivot.rotation.z = Math.PI / 2;
-            if (rightWingPivot) rightWingPivot.rotation.z = -Math.PI / 2;
-            if (stage1Smoke) stage1Smoke.visible = true;
+            // STAGE 1: COLD-LAUNCH (Wings fully collapsed/recessed inside fuselage scale.x = 0.001)
+            if (leftWingPivot) leftWingPivot.scale.set(0.001, 1, 1);
+            if (rightWingPivot) rightWingPivot.scale.set(0.001, 1, 1);
+            if (stage1SmokeGroup) {
+              stage1SmokeGroup.visible = true;
+              const puffScale = THREE.MathUtils.lerp(0.5, 1.6, clampedT / 0.22);
+              stage1SmokeGroup.scale.set(puffScale, puffScale, puffScale);
+            }
             if (sustainerFlame) sustainerFlame.visible = false;
           } else if (clampedT >= 0.22 && clampedT < 0.35) {
-            // STAGE 2: APOGEE & WING SNAP-OUT EXTENSION
+            // STAGE 2: APOGEE & WING DEPLOYMENT (Wings scale out from 0.001 to 1.0)
             const snapProgress = (clampedT - 0.22) / 0.13;
-            const wingAngle = THREE.MathUtils.lerp(Math.PI / 2, 0, snapProgress * snapProgress);
-            if (leftWingPivot) leftWingPivot.rotation.z = wingAngle;
-            if (rightWingPivot) rightWingPivot.rotation.z = -wingAngle;
-            if (stage1Smoke) stage1Smoke.visible = false;
+            const wingScale = THREE.MathUtils.lerp(0.001, 1.0, snapProgress * snapProgress);
+            if (leftWingPivot) leftWingPivot.scale.set(wingScale, 1, 1);
+            if (rightWingPivot) rightWingPivot.scale.set(wingScale, 1, 1);
+            if (stage1SmokeGroup) stage1SmokeGroup.visible = false;
             if (sustainerFlame) sustainerFlame.visible = true;
           } else {
             // STAGE 3: SUSTAINER FLIGHT ARC
-            hasAnyMissileReachedFlight = true;
-            if (leftWingPivot) leftWingPivot.rotation.z = 0;
-            if (rightWingPivot) rightWingPivot.rotation.z = 0;
-            if (stage1Smoke) stage1Smoke.visible = false;
+            if (leftWingPivot) leftWingPivot.scale.set(1, 1, 1);
+            if (rightWingPivot) rightWingPivot.scale.set(1, 1, 1);
+            if (stage1SmokeGroup) stage1SmokeGroup.visible = false;
             if (sustainerFlame) sustainerFlame.visible = true;
           }
 
@@ -114,6 +118,8 @@ export function initCinematicReplay(
           m.visible = true;
           m.lookAt(pos.clone().add(tangent));
           m.updateMatrixWorld(true);
+
+          latestActiveMissilePos = pos.clone();
 
           if (!leadMissilePos) {
             leadMissilePos = pos.clone();
@@ -196,10 +202,14 @@ export function initCinematicReplay(
 
       let activeDirectorMode = activeCue?.director?.mode || 'SUB_CHASE';
       
-      const launchSequenceCompleteSec = MISSILE_LAUNCH_START_SEC + (5 * 0.5) + 2.0;
-      if (tSec >= SUB_POSITIONING_SEC && tSec < launchSequenceCompleteSec && !hasAnyMissileReachedFlight) {
+      // Explicit timeline window: Switch camera to track the missile pop-up and deployment phase
+      const launchPhaseStart = MISSILE_LAUNCH_START_SEC - 0.2;
+      const launchPhaseEnd = MISSILE_LAUNCH_START_SEC + 4.5;
+      const isLaunchPhaseActive = tSec >= launchPhaseStart && tSec < launchPhaseEnd;
+
+      if (tSec >= SUB_POSITIONING_SEC && tSec < launchPhaseStart) {
         activeDirectorMode = 'SUB_CHASE';
-      } else if (hasAnyMissileReachedFlight && tSec < (MISSILE_LAUNCH_START_SEC + MISSILE_FLIGHT_DURATION)) {
+      } else if (isLaunchPhaseActive || activeDirectorMode === 'MISSILE_CHASE') {
         activeDirectorMode = 'MISSILE_CHASE';
       }
 
@@ -213,11 +223,12 @@ export function initCinematicReplay(
         }
 
         case 'MISSILE_CHASE': {
-          const activeMissilePos = sixthMissilePos || leadMissilePos;
+          const activeMissilePos = latestActiveMissilePos || sixthMissilePos || leadMissilePos;
           if (activeMissilePos) {
-            const camOffset = sixthMissileTangent.clone().multiplyScalar(-5.0).add(new THREE.Vector3(0, 1.4, 0));
+            // Track directly behind and slightly above the active rising/deploying missile cluster
+            const camOffset = new THREE.Vector3(0, 1.5, -4.8);
             targetCamPos.copy(activeMissilePos).add(camOffset);
-            targetLookAt.copy(activeMissilePos).add(sixthMissileTangent.clone().multiplyScalar(12.0));
+            targetLookAt.copy(activeMissilePos).add(new THREE.Vector3(0, 0.4, 2.0));
             blendFactor = 0.12;
           } else {
             const underwaterCam = positionCameraFacingNorthBelowWater(currentSubPos);
