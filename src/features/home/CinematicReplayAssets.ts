@@ -66,15 +66,19 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
   const coastalWaypoint = subStart.clone().lerp(depotTarget, 0.35).setY(13.5);
   const mountainWaypoint = subStart.clone().lerp(depotTarget, 0.65).setY(10.0);
 
-  // --- 3. 8 STAGGERED MISSILE FLIGHT SPLINES ---
-  const missileCurves = Array.from({ length: 8 }, (_, i) => {
-    const spread = new THREE.Vector3((i - 3.5) * 0.18, 0, ((i % 2) - 0.5) * 0.18);
+  // --- 3. UNIFIED SINGLE-FILE MISSILE SPLINES (Vertical Pop-up Built into Curve) ---
+  const missileCurves = Array.from({ length: 6 }, (_, i: number) => {
+    // Single clean longitudinal line along the submarine's deck axis (Z offset)
+    const deckOffset = new THREE.Vector3(0, 0, (i - 2.5) * 0.28);
+    const tubeExitPos = subStart.clone().add(deckOffset);
+    const verticalApogeePos = subStart.clone().add(new THREE.Vector3(0, 4.5, 0)).add(deckOffset);
+
     const pts = [
-      subStart.clone().add(spread),
-      subStart.clone().add(new THREE.Vector3(0, 1.2, 0)).add(spread),
-      coastalWaypoint.clone().add(spread),
-      mountainWaypoint.clone().add(spread),
-      depotTarget.clone().add(spread.multiplyScalar(0.25)),
+      tubeExitPos,                                   // P0: Stowed inside VLS tube
+      verticalApogeePos,                             // P1: Vertical pop-up / apogee point
+      coastalWaypoint.clone().add(deckOffset),       // P2: Pitch-over / coastal transit
+      mountainWaypoint.clone().add(deckOffset),      // P3: Mountain clearance
+      depotTarget.clone().add(deckOffset.multiplyScalar(0.2)), // P4: Target impact
     ];
     return new THREE.CatmullRomCurve3(pts);
   });
@@ -142,7 +146,7 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
   replayGroup.add(depotGroup);
 
   // --- 7. DETAILED MISSILE MESH ---
-  const createMissileMesh = () => {
+  const createMissileMesh = (): THREE.Group => {
     const group = new THREE.Group();
     const bodyMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 });
 
@@ -156,29 +160,35 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
     nose.rotation.x = Math.PI / 2;
     nose.position.z = 0.32;
 
-    const mainWingHoriz = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.015, 0.18), bodyMat);
-    mainWingHoriz.position.set(0, 0, 0.0);
+    const leftWingPivot = new THREE.Group();
+    leftWingPivot.position.set(-0.02, 0, 0.02);
+    const leftWing = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.012, 0.16), bodyMat);
+    leftWing.position.set(-0.16, 0, 0);
+    leftWingPivot.add(leftWing);
 
-    const tailFinHoriz = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.01, 0.08), bodyMat);
-    tailFinHoriz.position.set(0, 0, -0.2);
+    const rightWingPivot = new THREE.Group();
+    rightWingPivot.position.set(0.02, 0, 0.02);
+    const rightWing = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.012, 0.16), bodyMat);
+    rightWing.position.set(0.16, 0, 0);
+    rightWingPivot.add(rightWing);
 
-    const tailFinVertTop = new THREE.Mesh(new THREE.BoxGeometry(0.01, 0.125, 0.08), bodyMat);
-    tailFinVertTop.position.set(0, 0.0625, -0.2);
-
-    const flameGeo = new THREE.ConeGeometry(0.05, 0.3, 8);
-    flameGeo.rotateX(-Math.PI / 2);
-    const flameMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.9 });
-    const flame = new THREE.Mesh(flameGeo, flameMat);
-    flame.position.z = -0.35;
-
-    const innerFlame = new THREE.Mesh(
-      new THREE.ConeGeometry(0.025, 0.2, 8),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 1.0 })
+    const stage1Smoke = new THREE.Mesh(
+      new THREE.ConeGeometry(0.08, 0.4, 8),
+      new THREE.MeshBasicMaterial({ color: 0xf8fafc, transparent: true, opacity: 0.85 })
     );
-    innerFlame.rotateX(-Math.PI / 2);
-    innerFlame.position.z = -0.3;
+    stage1Smoke.rotateX(-Math.PI / 2);
+    stage1Smoke.position.z = -0.4;
 
-    group.add(body, nose, mainWingHoriz, tailFinHoriz, tailFinVertTop, flame, innerFlame);
+    const sustainerFlame = new THREE.Mesh(
+      new THREE.ConeGeometry(0.06, 0.35, 8),
+      new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.95 })
+    );
+    sustainerFlame.rotateX(-Math.PI / 2);
+    sustainerFlame.position.z = -0.38;
+    sustainerFlame.visible = false;
+
+    group.add(body, nose, leftWingPivot, rightWingPivot, stage1Smoke, sustainerFlame);
+    group.userData = { leftWingPivot, rightWingPivot, stage1Smoke, sustainerFlame };
     return group;
   };
 
@@ -196,7 +206,7 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
     [0, 0, 0],
     [-0.8, 0.1, -0.7],
     [0.8, -0.05, -0.7],
-  ].forEach(([x, y, z]) => {
+  ].forEach(([x, y, z]: number[]) => {
     const heloMesh = new THREE.Group();
     const body = new THREE.Mesh(
       new THREE.BoxGeometry(0.35, 0.3, 1.2),

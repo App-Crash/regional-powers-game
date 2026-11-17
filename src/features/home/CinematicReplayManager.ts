@@ -9,20 +9,10 @@ export interface CinematicReplayHandle {
   cleanup: () => void;
 }
 
-/**
- * Positions the camera strictly below the water line, positioned South of the submarine
- * and facing directly North toward the hull and VLS missile tubes.
- */
 function positionCameraFacingNorthBelowWater(subPos: THREE.Vector3): { targetCamPos: THREE.Vector3; targetLookAt: THREE.Vector3 } {
-  // Below water line (subPos.y minus offset)
   const underwaterY = subPos.y - 1.2;
-  
-  // Positioned South of the submarine (-Z direction in world space if North is +Z) so it looks North
   const targetCamPos = new THREE.Vector3(subPos.x, underwaterY, subPos.z - 4.5);
-  
-  // Looking North toward the submarine hull and VLS hatches (+Z direction)
   const targetLookAt = new THREE.Vector3(subPos.x, subPos.y + 0.2, subPos.z + 3.0);
-
   return { targetCamPos, targetLookAt };
 }
 
@@ -36,13 +26,12 @@ export function initCinematicReplay(
   scene.add(assets.replayGroup);
 
   let hasCompleted = false;
-  const playbackDuration = 22.0;
+  const playbackDuration = 26.0;
   
-  // Precise timing choreography
   const SUB_POSITIONING_SEC = 3.0;
-  const MISSILE_LAUNCH_START_SEC = 5.0; // 2-second pause after camera arrives in underwater position
-  const MISSILE_FLIGHT_DURATION = 5.5;
-  const INSERTION_START_SEC = 17.5;
+  const MISSILE_LAUNCH_START_SEC = 5.0; 
+  const MISSILE_FLIGHT_DURATION = 8.5;
+  const INSERTION_START_SEC = 19.0;
 
   const scriptCues: ScriptCue[] = ('scriptCues' in report && report.scriptCues) ? report.scriptCues : [];
 
@@ -65,29 +54,61 @@ export function initCinematicReplay(
 
       assets.replayGroup.updateMatrixWorld(true);
 
-      // Submarine underwater positioning & swell
-      const subSwell = Math.sin(tSec * 2.2) * 0.03;
-      const currentSubPos = assets.subStart.clone().add(new THREE.Vector3(0, subSwell, 0));
+      const currentSubPos = assets.subStart.clone();
       assets.subGroup.position.copy(currentSubPos);
+      assets.subGroup.rotation.set(0.04, 0, 0.02);
       assets.subGroup.visible = true;
       assets.subGroup.updateMatrixWorld(true);
 
-      // --- PHASE 1: STAGGERED UNDERWATER MISSILE SALVO ---
+      // --- PHASE 1: UNIFIED SINGLE-FILE MISSILE SALVO ---
       let sixthMissilePos: THREE.Vector3 | null = null;
       let sixthMissileTangent = new THREE.Vector3(0, 0, 1);
       let leadMissilePos: THREE.Vector3 | null = null;
+      let hasAnyMissileReachedFlight = false;
 
       assets.missileMeshes.forEach((m, idx) => {
-        const missileStartT = MISSILE_LAUNCH_START_SEC + (idx * 0.35); // Staggered launch per tube
+        const missileStartT = MISSILE_LAUNCH_START_SEC + (idx * 0.5); 
         const missileEndT = missileStartT + MISSILE_FLIGHT_DURATION;
 
         if (tSec < missileStartT) {
           m.visible = false;
         } else if (tSec >= missileStartT && tSec <= missileEndT) {
-          const localT = (tSec - missileStartT) / MISSILE_FLIGHT_DURATION;
-          const clampedT = THREE.MathUtils.clamp(localT, 0, 1);
-          const pos = assets.missileCurves[idx].getPointAt(clampedT);
-          const tangent = assets.missileCurves[idx].getTangentAt(clampedT);
+          const tLocal = tSec - missileStartT;
+          const localNormalizedT = tLocal / MISSILE_FLIGHT_DURATION;
+          const clampedT = THREE.MathUtils.clamp(localNormalizedT, 0, 1);
+
+          // Evaluate position and tangent uniformly along the CatmullRom curve
+          const curve = assets.missileCurves[idx];
+          const pos = curve.getPointAt(clampedT);
+          const tangent = curve.getTangentAt(clampedT);
+
+          const leftWingPivot = m.userData.leftWingPivot as THREE.Group;
+          const rightWingPivot = m.userData.rightWingPivot as THREE.Group;
+          const stage1Smoke = m.userData.stage1Smoke as THREE.Mesh;
+          const sustainerFlame = m.userData.sustainerFlame as THREE.Mesh;
+
+          if (clampedT < 0.22) {
+            // STAGE 1: COLD-LAUNCH EJECTION (First portion of curve = vertical pop-up)
+            if (leftWingPivot) leftWingPivot.rotation.z = Math.PI / 2;
+            if (rightWingPivot) rightWingPivot.rotation.z = -Math.PI / 2;
+            if (stage1Smoke) stage1Smoke.visible = true;
+            if (sustainerFlame) sustainerFlame.visible = false;
+          } else if (clampedT >= 0.22 && clampedT < 0.35) {
+            // STAGE 2: APOGEE & WING SNAP-OUT EXTENSION
+            const snapProgress = (clampedT - 0.22) / 0.13;
+            const wingAngle = THREE.MathUtils.lerp(Math.PI / 2, 0, snapProgress * snapProgress);
+            if (leftWingPivot) leftWingPivot.rotation.z = wingAngle;
+            if (rightWingPivot) rightWingPivot.rotation.z = -wingAngle;
+            if (stage1Smoke) stage1Smoke.visible = false;
+            if (sustainerFlame) sustainerFlame.visible = true;
+          } else {
+            // STAGE 3: SUSTAINER FLIGHT ARC
+            hasAnyMissileReachedFlight = true;
+            if (leftWingPivot) leftWingPivot.rotation.z = 0;
+            if (rightWingPivot) rightWingPivot.rotation.z = 0;
+            if (stage1Smoke) stage1Smoke.visible = false;
+            if (sustainerFlame) sustainerFlame.visible = true;
+          }
 
           m.position.copy(pos);
           m.visible = true;
@@ -139,7 +160,6 @@ export function initCinematicReplay(
         assets.operatorsGroup.visible = false;
       }
 
-      // Continuous smoke bubbling at impact site
       if (assets.isDepotDestroyed) {
         assets.smokeParticles.forEach((sp) => {
           sp.position.y += 0.006;
@@ -176,10 +196,11 @@ export function initCinematicReplay(
 
       let activeDirectorMode = activeCue?.director?.mode || 'SUB_CHASE';
       
-      // Hold underwater North-facing view until the last missile leaves the tube (~7.2s)
-      const lastMissileLeaveTubeSec = MISSILE_LAUNCH_START_SEC + (5 * 0.35) + 0.4;
-      if (tSec >= SUB_POSITIONING_SEC && tSec < lastMissileLeaveTubeSec) {
+      const launchSequenceCompleteSec = MISSILE_LAUNCH_START_SEC + (5 * 0.5) + 2.0;
+      if (tSec >= SUB_POSITIONING_SEC && tSec < launchSequenceCompleteSec && !hasAnyMissileReachedFlight) {
         activeDirectorMode = 'SUB_CHASE';
+      } else if (hasAnyMissileReachedFlight && tSec < (MISSILE_LAUNCH_START_SEC + MISSILE_FLIGHT_DURATION)) {
+        activeDirectorMode = 'MISSILE_CHASE';
       }
 
       switch (activeDirectorMode) {
@@ -194,10 +215,10 @@ export function initCinematicReplay(
         case 'MISSILE_CHASE': {
           const activeMissilePos = sixthMissilePos || leadMissilePos;
           if (activeMissilePos) {
-            const camOffset = sixthMissileTangent.clone().multiplyScalar(-4.5).add(new THREE.Vector3(0, 1.2, 0));
+            const camOffset = sixthMissileTangent.clone().multiplyScalar(-5.0).add(new THREE.Vector3(0, 1.4, 0));
             targetCamPos.copy(activeMissilePos).add(camOffset);
-            targetLookAt.copy(activeMissilePos).add(sixthMissileTangent.clone().multiplyScalar(10.0));
-            blendFactor = 0.15;
+            targetLookAt.copy(activeMissilePos).add(sixthMissileTangent.clone().multiplyScalar(12.0));
+            blendFactor = 0.12;
           } else {
             const underwaterCam = positionCameraFacingNorthBelowWater(currentSubPos);
             targetCamPos.copy(underwaterCam.targetCamPos);
