@@ -2,6 +2,8 @@
 import * as THREE from 'three';
 import { getWaypointPosition } from '../../data/tacticalWaypoints';
 import type { BattleReport } from '../../types/battleReport';
+import { getHexCenterPosition } from './HexGridLayer';
+import { alignToSurfaceNormal } from './CurvedTerrain';
 
 export interface ReplaySceneAssets {
   replayGroup: THREE.Group;
@@ -38,33 +40,61 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
   replayGroup.add(dirLight);
 
   // --- 2. WAYPOINTS & ELEVATIONS ---
-  const rawDepotPos = getWaypointPosition ? getWaypointPosition('HEX-VEN-MARACAY-DEPOT') : null;
-  const rawSubPos = getWaypointPosition ? getWaypointPosition('HEX-CARIBBEAN-SUB-01') : null;
   const rawFobPos = getWaypointPosition ? getWaypointPosition('HEX-COL-ARAUCA-FOB') : null;
   const rawLzPos = getWaypointPosition ? getWaypointPosition('HEX-VEN-CARACAS-OUTSKIRTS') : null;
   const rawHighwayPos = getWaypointPosition ? getWaypointPosition('HEX-VEN-TACHIRA-HIGHWAY') : null;
 
-  const fallbackDepot = new THREE.Vector3(2.2, 2.5, -4.5);
-  const fallbackSub = new THREE.Vector3(5.2, 12.5, -18.5);
   const fallbackFob = new THREE.Vector3(-4.0, 0.5, 4.0);
   const fallbackLz = new THREE.Vector3(1.5, 0.5, -2.5);
   const fallbackHighway = new THREE.Vector3(-1.0, 0.5, 0.0);
 
-  const depotBase = rawDepotPos ? rawDepotPos.clone() : fallbackDepot;
-  const subBase = rawSubPos ? rawSubPos.clone() : fallbackSub;
   const fobPos = rawFobPos ? rawFobPos.clone() : fallbackFob;
   const lzPos = rawLzPos ? rawLzPos.clone() : fallbackLz;
   const highwayPos = rawHighwayPos ? rawHighwayPos.clone() : fallbackHighway;
 
-  const SUB_WORLD_Y = 12.5;
-  const DEPOT_WORLD_Y = 2.5;
-  const NORTH_Z_OFFSET = -15.0;
+  const HEX_SIZE = 1.3;
+  const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
+  const HEX_HEIGHT = 2 * HEX_SIZE;
 
-  const depotTarget = depotBase.clone().setY(DEPOT_WORLD_Y);
-  const subStart = new THREE.Vector3(subBase.x, SUB_WORLD_Y, subBase.z + NORTH_Z_OFFSET);
+  // --- TARGET DEPOT HEX (0, 4) ---
+  const TARGET_Q = 0;
+  const TARGET_R = 4;
+  const depotHexCenter = getHexCenterPosition(TARGET_Q, TARGET_R);
+  const depotTarget = new THREE.Vector3(depotHexCenter.x, depotHexCenter.y, depotHexCenter.z);
+  const depotWx = HEX_WIDTH * (TARGET_Q + TARGET_R / 2);
+  const depotWy = (HEX_HEIGHT * 3 / 4) * TARGET_R;
 
-  const coastalWaypoint = subStart.clone().lerp(depotTarget, 0.35).setY(13.5);
-  const mountainWaypoint = subStart.clone().lerp(depotTarget, 0.65).setY(10.0);
+  // --- PERMANENT SUBMARINE AT HEX (-4, 12) [FLAT LEVEL WATERLINE ALIGNMENT] ---
+  const SUB_Q = -4;
+  const SUB_R = 12;
+  const subHexCenter = getHexCenterPosition(SUB_Q, SUB_R);
+
+  const subGroup = new THREE.Group();
+  const hullGeo = new THREE.CylinderGeometry(0.4, 0.4, 3.0, 16);
+  hullGeo.rotateZ(Math.PI / 2);
+  hullGeo.rotateX(-Math.PI);
+  const subMat = new THREE.MeshStandardMaterial({ color: 0x1f2b2d, metalness: 0.7, roughness: 0.3 });
+  const hull = new THREE.Mesh(hullGeo, subMat);
+
+  const towerGeo = new THREE.BoxGeometry(0.25, 0.5, 0.8);
+  const towerMat = new THREE.MeshStandardMaterial({ color: 0x152224, metalness: 0.6, roughness: 0.4 });
+  const tower = new THREE.Mesh(towerGeo, towerMat);
+  tower.position.set(0, 0.4, 0.15);
+  subGroup.add(hull, tower);
+
+  // Position at hex center Y and sink to underwater depth offset
+  const SUB_DEPTH_OFFSET = 0.5;
+  subGroup.position.set(subHexCenter.x, subHexCenter.y - SUB_DEPTH_OFFSET, subHexCenter.z);
+  
+  // Strict horizontal yaw-only rotation toward depot (locking pitch X and roll Z to 0)
+  const angle = Math.atan2(depotTarget.x - subGroup.position.x, depotTarget.z - subGroup.position.z);
+  subGroup.rotation.set(0, angle, 0);
+
+  const subStart = subGroup.position.clone();
+  replayGroup.add(subGroup);
+
+  const coastalWaypoint = subStart.clone().lerp(depotTarget, 0.35).setY(subStart.y + 1.0);
+  const mountainWaypoint = subStart.clone().lerp(depotTarget, 0.65).setY(subStart.y + 0.5);
 
   // --- 3. UNIFIED SINGLE-FILE MISSILE SPLINES ---
   const missileCurves = Array.from({ length: 6 }, (_, i: number) => {
@@ -89,22 +119,7 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
     lzPos.clone().add(new THREE.Vector3(0, 0.2, 0)),
   ]);
 
-  // --- 5. SUBMARINE HULL ---
-  const subGroup = new THREE.Group();
-  const hullGeo = new THREE.CylinderGeometry(0.4, 0.4, 3.0, 16);
-  hullGeo.rotateX(Math.PI / 2);
-  const subMat = new THREE.MeshStandardMaterial({ color: 0x1f2b2d, metalness: 0.7, roughness: 0.3 });
-  const hull = new THREE.Mesh(hullGeo, subMat);
-
-  const towerGeo = new THREE.BoxGeometry(0.25, 0.5, 0.8);
-  const towerMat = new THREE.MeshStandardMaterial({ color: 0x152224, metalness: 0.6, roughness: 0.4 });
-  const tower = new THREE.Mesh(towerGeo, towerMat);
-  tower.position.set(0, 0.4, 0.15);
-  subGroup.add(hull, tower);
-  subGroup.position.copy(subStart);
-  replayGroup.add(subGroup);
-
-  // --- 6. TARGET DEPOT COMPLEX ---
+  // --- 5. TARGET DEPOT COMPLEX (Centered at Hex 0, 4) ---
   const depotGroup = new THREE.Group();
   const intactBunker = new THREE.Mesh(
     new THREE.BoxGeometry(1.0, 0.5, 1.0),
@@ -141,10 +156,12 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
     smokeParticles.push(smokeMesh);
   }
   depotGroup.add(smokeGroup);
+
   depotGroup.position.copy(depotTarget);
+  alignToSurfaceNormal(depotGroup, depotWx, depotWy);
   replayGroup.add(depotGroup);
 
-  // --- 7. DETAILED MISSILE MESH (Pivot-nested wings for 100% recessed in-tube stowing) ---
+  // --- 6. DETAILED MISSILE MESH ---
   const createMissileMesh = (): THREE.Group => {
     const group = new THREE.Group();
     const bodyMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 });
@@ -159,21 +176,18 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
     nose.rotation.x = Math.PI / 2;
     nose.position.z = 0.32;
 
-    // Left Wing Pivot & Mesh (Stowed scale.x = 0.001 fully collapsed inside body hull)
     const leftWingPivot = new THREE.Group();
     leftWingPivot.position.set(-0.03, 0, 0);
     const leftWing = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.012, 0.16), bodyMat);
     leftWing.position.set(-0.13, 0, 0);
     leftWingPivot.add(leftWing);
 
-    // Right Wing Pivot & Mesh
     const rightWingPivot = new THREE.Group();
     rightWingPivot.position.set(0.03, 0, 0);
     const rightWing = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.012, 0.16), bodyMat);
     rightWing.position.set(0.13, 0, 0);
     rightWingPivot.add(rightWing);
 
-    // Stage 1 Cold-Launch Large Opaque Gray Smoke Bubbles
     const stage1SmokeGroup = new THREE.Group();
     stage1SmokeGroup.position.set(0, 0, -0.35);
     const smokeMat = new THREE.MeshStandardMaterial({ color: 0x71717a, roughness: 0.9, metalness: 0.1, transparent: true, opacity: 0.95 });
@@ -187,7 +201,6 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
     stage1SmokeGroup.add(bubble1, bubble2, bubble3);
     stage1SmokeGroup.name = 'stage1SmokeGroup';
 
-    // Stage 3 Sustainer Main Motor Flame
     const sustainerFlame = new THREE.Mesh(
       new THREE.ConeGeometry(0.06, 0.35, 8),
       new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.95 })
@@ -208,7 +221,7 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
     return m;
   });
 
-  // --- 8. HELICOPTERS & OPERATORS ---
+  // --- 7. HELICOPTERS & OPERATORS ---
   const heliGroup = new THREE.Group();
   heliGroup.name = 'BlackhawkSquadron';
   [
