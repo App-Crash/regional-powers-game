@@ -5,11 +5,25 @@ import type { BattleResultJson, ScriptCue } from '../../types/operationSchema';
 import { buildCinematicReplayAssets } from './CinematicReplayAssets';
 
 export interface CinematicReplayHandle {
-  update: (tSec: number, camera: THREE.PerspectiveCamera, controls?: any) => void;
+  update: (tSec: number, camera: THREE.PerspectiveCamera, controls: any) => void;
   cleanup: () => void;
 }
 
-function positionCameraFacingNorthBelowWater(subPos: THREE.Vector3): { targetCamPos: THREE.Vector3; targetLookAt: THREE.Vector3 } {
+export type ReplayTimeUpdateCallback = (simClock: string, headline: string, note: string) => void;
+export type ReplayCompleteCallback = () => void;
+
+interface ReplayChapterEntry {
+  startSec: number;
+  endSec: number;
+  simClock: string;
+  headline: string;
+  telemetryNote: string;
+}
+
+function positionCameraFacingNorthBelowWater(subPos: THREE.Vector3): {
+  targetCamPos: THREE.Vector3;
+  targetLookAt: THREE.Vector3;
+} {
   const underwaterY = subPos.y - 1.2;
   const targetCamPos = new THREE.Vector3(subPos.x, underwaterY, subPos.z - 4.5);
   const targetLookAt = new THREE.Vector3(subPos.x, subPos.y + 0.2, subPos.z + 3.0);
@@ -19,34 +33,45 @@ function positionCameraFacingNorthBelowWater(subPos: THREE.Vector3): { targetCam
 export function initCinematicReplay(
   scene: THREE.Scene,
   report: BattleReport | BattleResultJson,
-  onTimeUpdate?: (simClock: string, headline: string, note: string) => void,
-  onComplete?: () => void
+  onTimeUpdate: ReplayTimeUpdateCallback | undefined,
+  onComplete: ReplayCompleteCallback | undefined
 ): CinematicReplayHandle {
   const assets = buildCinematicReplayAssets(report);
   scene.add(assets.replayGroup);
 
   let hasCompleted = false;
   const playbackDuration = 26.0;
-  
+
   const SUB_POSITIONING_SEC = 3.0;
-  const MISSILE_LAUNCH_START_SEC = 5.0; 
+  const MISSILE_LAUNCH_START_SEC = 5.0;
   const MISSILE_FLIGHT_DURATION = 8.5;
   const INSERTION_START_SEC = 19.0;
 
-  const scriptCues: ScriptCue[] = ('scriptCues' in report && report.scriptCues) ? report.scriptCues : [];
+  const reportAsRecord = report as unknown as Record<string, unknown>;
+  const rawCues = reportAsRecord.scriptCues;
+  const scriptCues: ScriptCue[] = Array.isArray(rawCues) ? (rawCues as ScriptCue[]) : [];
+
+  const rawChapters = reportAsRecord.chapters;
+  const chapters: ReplayChapterEntry[] = Array.isArray(rawChapters)
+    ? (rawChapters as ReplayChapterEntry[])
+    : [];
 
   return {
-    update: (tSec: number, camera: THREE.PerspectiveCamera, controls?: any) => {
+    update: (tSec: number, camera: THREE.PerspectiveCamera, controls: any) => {
       // --- DIRECTOR SCRIPT CUE EVALUATION ---
-      const activeCue = scriptCues.find(
-        (c) => tSec >= c.startSec && tSec < c.endSec
-      ) || scriptCues[scriptCues.length - 1];
+      const matchedCue = scriptCues.find((c: ScriptCue) => tSec >= c.startSec && tSec < c.endSec);
+      const fallbackCue = scriptCues.length > 0 ? scriptCues[scriptCues.length - 1] : undefined;
+      const activeCue = matchedCue || fallbackCue;
 
       if (activeCue && onTimeUpdate) {
         onTimeUpdate(activeCue.simClock, activeCue.headline, activeCue.telemetryNote);
       } else {
-        const chapters = ('chapters' in report ? report.chapters : []) || [];
-        const chapter = chapters.find((c: any) => tSec >= c.startSec && tSec < c.endSec) || chapters[chapters.length - 1];
+        const matchedChapter = chapters.find(
+          (c: ReplayChapterEntry) => tSec >= c.startSec && tSec < c.endSec
+        );
+        const fallbackChapter =
+          chapters.length > 0 ? chapters[chapters.length - 1] : undefined;
+        const chapter = matchedChapter || fallbackChapter;
         if (chapter && onTimeUpdate) {
           onTimeUpdate(chapter.simClock, chapter.headline, chapter.telemetryNote);
         }
@@ -62,12 +87,11 @@ export function initCinematicReplay(
 
       // --- PHASE 1: UNIFIED SINGLE-FILE MISSILE SALVO WITH ACCELERATION MATH ---
       let sixthMissilePos: THREE.Vector3 | null = null;
-      let sixthMissileTangent = new THREE.Vector3(0, 0, 1);
       let leadMissilePos: THREE.Vector3 | null = null;
       let latestActiveMissilePos: THREE.Vector3 | null = null;
 
       assets.missileMeshes.forEach((m, idx) => {
-        const missileStartT = MISSILE_LAUNCH_START_SEC + (idx * 0.5); 
+        const missileStartT = MISSILE_LAUNCH_START_SEC + idx * 0.5;
         const missileEndT = missileStartT + MISSILE_FLIGHT_DURATION;
 
         if (tSec < missileStartT) {
@@ -127,7 +151,6 @@ export function initCinematicReplay(
 
           if (idx === 5) {
             sixthMissilePos = pos.clone();
-            sixthMissileTangent = tangent.clone();
           }
 
           if (clampedT >= 0.98) {
@@ -139,13 +162,13 @@ export function initCinematicReplay(
       });
 
       // --- HELICOPTER CONTINUOUS FLIGHT PROGRESS ---
-      let currentHeloPos = assets.heliCurve ? assets.heliCurve.getPointAt(0) : new THREE.Vector3();
-      
+      const currentHeloPos = assets.heliCurve ? assets.heliCurve.getPointAt(0) : new THREE.Vector3();
+
       if (tSec >= 0.0) {
         const heloT = THREE.MathUtils.clamp(tSec / playbackDuration, 0, 1);
         const heloPos = assets.heliCurve.getPointAt(heloT);
         const heloTan = assets.heliCurve.getTangentAt(heloT);
-        
+
         assets.heliGroup.position.copy(heloPos);
         assets.heliGroup.lookAt(heloPos.clone().add(heloTan));
         assets.heliGroup.visible = true;
@@ -155,10 +178,14 @@ export function initCinematicReplay(
           assets.operatorsGroup.visible = true;
           const insertT = THREE.MathUtils.clamp((tSec - INSERTION_START_SEC) / 4.5, 0, 1);
           const fanOut = THREE.MathUtils.clamp(insertT, 0, 1);
-          
+
           assets.operatorsGroup.children.forEach((op, idx) => {
             const angle = (idx - 2.5) * 0.35;
-            op.position.set(Math.sin(angle) * fanOut * 1.5, 0.1, Math.cos(angle) * fanOut * 1.8);
+            op.position.set(
+              Math.sin(angle) * fanOut * 1.5,
+              0.1,
+              Math.cos(angle) * fanOut * 1.8
+            );
           });
         }
       } else {
@@ -196,12 +223,13 @@ export function initCinematicReplay(
       }
 
       // --- DIRECTOR CAMERA CHOREOGRAPHY ---
-      let targetCamPos = new THREE.Vector3();
-      let targetLookAt = new THREE.Vector3();
+      const targetCamPos = new THREE.Vector3();
+      const targetLookAt = new THREE.Vector3();
       let blendFactor = 0.08;
 
-      let activeDirectorMode = activeCue?.director?.mode || 'SUB_CHASE';
-      
+      const cueDirector = activeCue && activeCue.director ? activeCue.director : undefined;
+      let activeDirectorMode = cueDirector && cueDirector.mode ? cueDirector.mode : 'SUB_CHASE';
+
       // Explicit timeline window: Switch camera to track the missile pop-up and deployment phase
       const launchPhaseStart = MISSILE_LAUNCH_START_SEC - 0.2;
       const launchPhaseEnd = MISSILE_LAUNCH_START_SEC + 4.5;
@@ -254,7 +282,9 @@ export function initCinematicReplay(
         case 'LANDING_LZ':
         default: {
           const pullT = THREE.MathUtils.clamp((tSec - INSERTION_START_SEC) / 4.5, 0, 1);
-          targetCamPos.copy(assets.operatorsGroup.position).add(new THREE.Vector3(0, 2.0 + pullT * 12.0, 3.0 + pullT * 14.0));
+          targetCamPos
+            .copy(assets.operatorsGroup.position)
+            .add(new THREE.Vector3(0, 2.0 + pullT * 12.0, 3.0 + pullT * 14.0));
           targetLookAt.copy(assets.operatorsGroup.position);
           blendFactor = 0.05;
           break;
@@ -268,7 +298,9 @@ export function initCinematicReplay(
       } else {
         camera.position.lerp(targetCamPos, blendFactor);
         camera.up.set(0, 1, 0);
-        const currentLookAt = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion).add(camera.position);
+        const currentLookAt = new THREE.Vector3(0, 0, -1)
+          .applyQuaternion(camera.quaternion)
+          .add(camera.position);
         currentLookAt.lerp(targetLookAt, blendFactor);
         camera.lookAt(currentLookAt);
       }

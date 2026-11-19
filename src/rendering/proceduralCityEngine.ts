@@ -26,7 +26,7 @@ export function createEmergentHexStructures(hex: RuntimeHexEntity): THREE.Group 
   };
 
   const pop = hex.population;
-  const isGreyZone = hex.ctrl === null || pop < 500;
+  const isGreyZone = hex.fac_ctl === null || pop < 500;
   
   const nodes = hex.infra_nodes || (hex as any).infrastructureNodes || [];
   const industrialTierSum = nodes

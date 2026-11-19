@@ -1,6 +1,11 @@
+// src/features/home/BuildingModels.ts
+// Persistent World Structures: Builds fixed map installations/facilities
+// aligned to terrain curvature. Replay and combat choreography should bind to
+// or reference existing world entities rather than instantiating duplicate
+// scenario props.
+
 import * as THREE from 'three';
 import { alignToSurfaceNormal } from './CurvedTerrain';
-
 export type BuildingType = 'CAPITAL' | 'MANUFACTURING' | 'MILITARY_BASE' | 'PORT';
 
 export function createDetailedBuilding(

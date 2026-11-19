@@ -41,28 +41,30 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
 
   // --- 2. WAYPOINTS & ELEVATIONS ---
   const rawFobPos = getWaypointPosition ? getWaypointPosition('HEX-COL-ARAUCA-FOB') : null;
-  const rawLzPos = getWaypointPosition ? getWaypointPosition('HEX-VEN-CARACAS-OUTSKIRTS') : null;
   const rawHighwayPos = getWaypointPosition ? getWaypointPosition('HEX-VEN-TACHIRA-HIGHWAY') : null;
 
   const fallbackFob = new THREE.Vector3(-4.0, 0.5, 4.0);
-  const fallbackLz = new THREE.Vector3(1.5, 0.5, -2.5);
   const fallbackHighway = new THREE.Vector3(-1.0, 0.5, 0.0);
 
   const fobPos = rawFobPos ? rawFobPos.clone() : fallbackFob;
-  const lzPos = rawLzPos ? rawLzPos.clone() : fallbackLz;
   const highwayPos = rawHighwayPos ? rawHighwayPos.clone() : fallbackHighway;
 
   const HEX_SIZE = 1.3;
   const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
   const HEX_HEIGHT = 2 * HEX_SIZE;
 
-  // --- TARGET DEPOT HEX (0, 4) ---
+  // --- TARGET DEPOT & LZ SHARED HEX (0, 4) ---
   const TARGET_Q = 0;
   const TARGET_R = 4;
   const depotHexCenter = getHexCenterPosition(TARGET_Q, TARGET_R);
   const depotTarget = new THREE.Vector3(depotHexCenter.x, depotHexCenter.y, depotHexCenter.z);
   const depotWx = HEX_WIDTH * (TARGET_Q + TARGET_R / 2);
   const depotWy = (HEX_HEIGHT * 3 / 4) * TARGET_R;
+
+  // LZ shares hex (0, 4) using the same helper positioning
+  const lzPos = depotTarget.clone();
+  const lzWx = depotWx;
+  const lzWy = depotWy;
 
   // --- PERMANENT SUBMARINE AT HEX (-4, 12) [FLAT LEVEL WATERLINE ALIGNMENT] ---
   const SUB_Q = -4;
@@ -86,7 +88,7 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
   const SUB_DEPTH_OFFSET = 0.5;
   subGroup.position.set(subHexCenter.x, subHexCenter.y - SUB_DEPTH_OFFSET, subHexCenter.z);
   
-  // Strict horizontal yaw-only rotation toward depot (locking pitch X and roll Z to 0)
+  // Strict horizontal yaw-only rotation toward depot
   const angle = Math.atan2(depotTarget.x - subGroup.position.x, depotTarget.z - subGroup.position.z);
   subGroup.rotation.set(0, angle, 0);
 
@@ -244,6 +246,7 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
   const operatorsGroup = new THREE.Group();
   operatorsGroup.name = 'SpecialForcesOperators';
   operatorsGroup.position.copy(lzPos);
+  alignToSurfaceNormal(operatorsGroup, lzWx, lzWy);
   operatorsGroup.visible = false;
   Array.from({ length: 6 }).forEach(() => {
     const opMesh = new THREE.Mesh(

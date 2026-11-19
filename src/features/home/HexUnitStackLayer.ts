@@ -1,3 +1,9 @@
+// src/features/home/HexUnitStackLayer.ts
+// Planning / Garrison Layer: Renders tabletop NATO chip stacks per hex for
+// formation/unit presence and selection. Units include support/command overhead
+// and are distinct from animation equipment (specific hardware/platforms bound
+// during battle replays or shown in garage/research views).
+
 import * as THREE from 'three';
 import { getHexCenterPosition, axialToWorld } from './HexGridLayer';
 import { getCurvatureHeight, TERRAIN_ROTATION_X } from './CurvedTerrain';
