@@ -18,7 +18,7 @@ import { renderStationedUnitChips } from './HexUnitChipRenderer';
 import { type CombatUnit } from '../../types/unitOrders';
 
 interface CurvedEarthMapProps {
-  activeRegion?: TheaterRegion;
+  activeRegion: TheaterRegion;
   layers: {
     hexGrid: boolean;
     topology: boolean;
@@ -26,35 +26,35 @@ interface CurvedEarthMapProps {
     econ: boolean;
     milUnits: boolean;
     politicalControl: boolean;
-    borders?: boolean;
+    borders: boolean;
   };
   editor: ReturnType<typeof useTheaterEditor>;
-  onSelectHex?: (hex: HexData | RuntimeHexEntity | null) => void;
-  activeBattleReport?: BattleReport | null;
-  onBattleComplete?: () => void;
-  onTimeUpdate?: (simClock: string, headline: string, note: string) => void;
-  getHexWorldPos?: (hexId: string) => THREE.Vector3;
-  orbitControlsRef?: React.RefObject<any>;
-  unitMarkerPos?: { q: number; r: number } | null;
-  haloHexes?: HaloHexEntry[];
-  selectedDestPos?: { q: number; r: number } | null;
-  allUnits?: CombatUnit[];
-  selectedUnitId?: string | null;
+  onSelectHex: (hex: HexData | RuntimeHexEntity | null) => void;
+  activeBattleReport: BattleReport | null;
+  onBattleComplete: () => void;
+  onTimeUpdate: (simClock: string, headline: string, note: string) => void;
+  getHexWorldPos: (hexId: string) => THREE.Vector3;
+  orbitControlsRef: React.RefObject<any>;
+  unitMarkerPos: { q: number; r: number } | null;
+  haloHexes: HaloHexEntry[];
+  selectedDestPos: { q: number; r: number } | null;
+  allUnits: CombatUnit[];
+  selectedUnitId: string | null;
 }
 
 export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
-  activeRegion = 'SA',
+  activeRegion,
   layers,
   editor,
   onSelectHex,
   activeBattleReport,
   onBattleComplete,
   onTimeUpdate,
-  unitMarkerPos = null,
-  haloHexes = [],
-  selectedDestPos = null,
-  allUnits = [],
-  selectedUnitId = null,
+  unitMarkerPos,
+  haloHexes,
+  selectedDestPos,
+  allUnits,
+  selectedUnitId,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const layersRef = useRef(layers);
@@ -220,7 +220,6 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
     const cleanupSelection = setupHexSelection(
       renderer.domElement,
       camera,
-      scene,
       gridGroup,
       (hex) => handleSelectHex(hex)
     );
@@ -238,7 +237,10 @@ export const CurvedEarthMap: React.FC<CurvedEarthMapProps> = ({
 
       structuresGroup.visible = layersRef.current.milUnits || layersRef.current.econ;
       if (bordersGroupRef.current) {
-        bordersGroupRef.current.visible = layersRef.current.borders ?? layersRef.current.politicalControl;
+        bordersGroupRef.current.visible =
+          typeof layersRef.current.borders === 'boolean'
+            ? layersRef.current.borders
+            : layersRef.current.politicalControl;
       }
       gridGroup.visible = layersRef.current.hexGrid;
       controlGroup.visible = layersRef.current.politicalControl;

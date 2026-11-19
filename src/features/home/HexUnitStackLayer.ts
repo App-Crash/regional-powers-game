@@ -6,7 +6,7 @@
 
 import * as THREE from 'three';
 import { getHexCenterPosition, axialToWorld } from './HexGridLayer';
-import { getCurvatureHeight, TERRAIN_ROTATION_X } from './CurvedTerrain';
+import { getCurvatureHeight } from './CurvedTerrain';
 import { type CombatUnit } from '../../types/unitOrders';
 
 export function createUnitStackMeshes(
@@ -54,7 +54,7 @@ export function createUnitStackMeshes(
       });
 
       const chipMesh = new THREE.Mesh(chipGeo, chipMat);
-      
+
       // Position along surface normal vector
       chipMesh.position.set(
         center.x + surfaceNormal.x * heightOffset,

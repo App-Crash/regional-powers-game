@@ -1,5 +1,10 @@
 // src/features/home/CinematicReplayManager.ts
 import * as THREE from 'three';
+import { bindReplayCastFromReport, type BoundReplayCast } from '../../models/replayCastBinder';
+import {
+  createReplayCastEventDriver,
+  type ReplayCastEventDriver,
+} from '../../models/replayEventDriver';
 import type { BattleReport } from '../../types/battleReport';
 import type { BattleResultJson, ScriptCue } from '../../types/operationSchema';
 import { buildCinematicReplayAssets } from './CinematicReplayAssets';
@@ -37,6 +42,17 @@ export function initCinematicReplay(
   onComplete: ReplayCompleteCallback | undefined
 ): CinematicReplayHandle {
   const assets = buildCinematicReplayAssets(report);
+  const hasCastArray = Boolean(report && Array.isArray((report as BattleReport).cast));
+  const boundCast: BoundReplayCast | null = hasCastArray
+    ? bindReplayCastFromReport(report as BattleReport)
+    : null;
+  const eventDriver: ReplayCastEventDriver | null = boundCast
+    ? createReplayCastEventDriver(report as BattleReport, boundCast)
+    : null;
+
+  if (boundCast) {
+    assets.replayGroup.add(boundCast.rootGroup);
+  }
   scene.add(assets.replayGroup);
 
   let hasCompleted = false;
@@ -58,6 +74,10 @@ export function initCinematicReplay(
 
   return {
     update: (tSec: number, camera: THREE.PerspectiveCamera, controls: any) => {
+      if (eventDriver) {
+        eventDriver.applyAtTime(tSec);
+      }
+
       // --- DIRECTOR SCRIPT CUE EVALUATION ---
       const matchedCue = scriptCues.find((c: ScriptCue) => tSec >= c.startSec && tSec < c.endSec);
       const fallbackCue = scriptCues.length > 0 ? scriptCues[scriptCues.length - 1] : undefined;
@@ -306,6 +326,10 @@ export function initCinematicReplay(
       }
     },
     cleanup: () => {
+      if (boundCast) {
+        assets.replayGroup.remove(boundCast.rootGroup);
+        boundCast.dispose();
+      }
       scene.remove(assets.replayGroup);
     },
   };

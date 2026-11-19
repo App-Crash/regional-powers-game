@@ -14,10 +14,10 @@ import { UnitStatsHUD } from '../orders/UnitStatsHUD';
 
 interface PlayerHomeViewportProps {
   editor: ReturnType<typeof useTheaterEditor>;
-  onLaunchCampaign?: (viewportBoundsOrReport: any) => void;
-  activeBattleReport?: BattleReport | null;
-  onBattleComplete?: () => void;
-  onTimeUpdate?: (simClock: string, headline: string, note: string) => void;
+  onLaunchCampaign: (viewportBoundsOrReport: any) => void;
+  activeBattleReport: BattleReport | null;
+  onBattleComplete: () => void;
+  onTimeUpdate: (simClock: string, headline: string, note: string) => void;
 }
 
 export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({
@@ -124,6 +124,18 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({
     return coords ? new THREE.Vector3(...coords) : new THREE.Vector3(0, 0.5, 0);
   }, []);
 
+  const resolvedBattleReport: BattleReport | null = activeBattleReport ? activeBattleReport : null;
+  const handleBattleCompleteSafe = (): void => {
+    if (onBattleComplete) {
+      onBattleComplete();
+    }
+  };
+  const handleTimeUpdateSafe = (simClock: string, headline: string, note: string): void => {
+    if (onTimeUpdate) {
+      onTimeUpdate(simClock, headline, note);
+    }
+  };
+
   const activeTiles = theater.getActiveTiles();
   const hexUnits = orders.inspectedHex ? orders.getUnitsAtHex(orders.inspectedHex.q, orders.inspectedHex.r) : [];
 
@@ -136,22 +148,22 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({
           layers={layers}
           editor={editor}
           onSelectHex={handleSelectHex}
-          activeBattleReport={activeBattleReport}
-          onBattleComplete={onBattleComplete}
-          onTimeUpdate={onTimeUpdate}
+          activeBattleReport={resolvedBattleReport}
+          onBattleComplete={handleBattleCompleteSafe}
+          onTimeUpdate={handleTimeUpdateSafe}
           getHexWorldPos={getHexWorldPos}
           orbitControlsRef={orbitControlsRef}
           unitMarkerPos={orders.activeUnit ? { q: orders.activeUnit.q, r: orders.activeUnit.r } : null}
           haloHexes={orders.haloHexes}
           selectedDestPos={orders.destinationHex ? { q: orders.destinationHex.q, r: orders.destinationHex.r } : null}
           allUnits={orders.units}
-          selectedUnitId={orders.activeUnit?.id || null}
+          selectedUnitId={orders.activeUnit ? orders.activeUnit.id : null}
         />
       </div>
 
       {/* Foreground UI Layer (CSS Grid Overlay with pointer-events-none, panels re-enable pointer-events-auto) */}
       <div className="absolute inset-0 z-30 pointer-events-none grid grid-cols-12 grid-rows-12 p-4 gap-4 select-none">
-        
+
         {/* 1. TOP-RIGHT TELEMETRY LAYERS MENU (Row 1, Cols 9-12) */}
         <div ref={telemetryRef} className="col-start-9 col-span-4 row-start-1 flex items-start justify-end gap-3 text-xs md:text-sm tracking-wider font-mono pointer-events-auto">
           <div className={`hidden lg:flex items-center gap-1.5 bg-black/80 backdrop-blur px-3 py-1.5 rounded border ${theme.borderAccent} h-fit`}>
@@ -213,7 +225,7 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({
               )}
               <div className="flex justify-between py-1 px-2 bg-white/5">
                 <span className="opacity-60">FACTION:</span>
-                <span className="font-bold text-sky-300 uppercase">{orders.inspectedHex.fac_ctl || 'UNCLAIMED'}</span>
+                <span className="font-bold text-sky-300 uppercase">{orders.inspectedHex.fac_ctl ? orders.inspectedHex.fac_ctl : 'UNCLAIMED'}</span>
               </div>
               <div className="flex justify-between py-1 px-2 bg-white/5">
                 <span className="opacity-60">TERRAIN:</span>
@@ -243,7 +255,7 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({
                     onClick={(e) => {
                       e.stopPropagation();
                       console.log(`[Diagnostic] Garrison unit button clicked:`, unit);
-                      
+
                       // 1. Select the unit to update activeUnit state and open UnitStatsHUD
                       orders.selectUnit(unit.id);
 
@@ -253,7 +265,7 @@ export const PlayerHomeViewport: React.FC<PlayerHomeViewportProps> = ({
                       }
                     }}
                     className={`w-full py-1.5 px-2 text-left bg-slate-900/80 hover:bg-slate-800 flex justify-between items-center transition cursor-pointer ${
-                      orders.activeUnit?.id === unit.id ? 'border-l-2 border-sky-400 text-sky-200' : 'text-slate-300'
+                      orders.activeUnit && orders.activeUnit.id === unit.id ? 'border-l-2 border-sky-400 text-sky-200' : 'text-slate-300'
                     }`}
                   >
                     <span className="font-bold">{unit.name}</span>

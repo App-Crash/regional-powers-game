@@ -45,9 +45,7 @@ export const ColombiaTheaterView: React.FC = () => {
     scene.add(theaterGroup);
 
     // 4. Initialize Emergent Theater Scene (Colombia 10 Major Hubs)
-    let hexRegistryMap: Record<string, RuntimeHexEntity> = {};
     initializeTheaterScene(theaterGroup).then((registry) => {
-      hexRegistryMap = registry;
       setIsLoaded(true);
       console.log('[ColombiaTheaterView] Theater scene loaded with registry:', registry);
     });
@@ -67,11 +65,11 @@ export const ColombiaTheaterView: React.FC = () => {
       if (intersects.length > 0) {
         let obj: THREE.Object3D | null = intersects[0].object;
         // Traverse up to find the group holding the runtimeHex data
-        while (obj && !obj.userData?.runtimeHex) {
+        while (obj && !(obj.userData && obj.userData.runtimeHex)) {
           obj = obj.parent;
         }
 
-        if (obj && obj.userData?.runtimeHex) {
+        if (obj && obj.userData && obj.userData.runtimeHex) {
           const clickedHex: RuntimeHexEntity = obj.userData.runtimeHex;
           setSelectedHex(clickedHex);
         }

@@ -1,5 +1,5 @@
 // src/types/operationSchema.ts
-import type { BattleChapter, BattleReport } from './battleReport';
+import type { BattleReport } from './battleReport';
 import type { EquipmentVariant } from '../graphics/equipmentTypes';
 
 /**
@@ -7,11 +7,11 @@ import type { EquipmentVariant } from '../graphics/equipmentTypes';
  */
 export interface AttackPackageOrder {
   orderType: 'SALVO_STRIKE' | 'AIR_ASSAULT_INSERT' | 'GROUND_ADVANCE';
-  sourceSlotId?: string;
+  sourceSlotId: string;
   waypoints: string[];
   targetHexId: string;
-  targetEntityIds?: string[];
-  salvoAllocation?: Record<string, number>;
+  targetEntityIds: string[];
+  salvoAllocation: Record<string, number>;
 }
 
 export interface AttackPackage {
@@ -19,7 +19,7 @@ export interface AttackPackage {
   role: 'SUPPORT_SEAD' | 'PRIMARY_ASSAULT' | 'FEINT';
   phaseOffsetSec: number;
   primaryVariantId: string;
-  attachedVariantIds?: string[];
+  attachedVariantIds: string[];
   orders: AttackPackageOrder[];
 }
 
@@ -43,10 +43,10 @@ export interface DeployedDefenseEntity {
   displayName: string;
   variantId: string;
   hexId: string;
-  networkId?: string;
-  requiresNetworkRadar?: boolean;
+  networkId: string;
+  requiresNetworkRadar: boolean;
   strengthPct: number;
-  isHvt?: boolean;
+  isHvt: boolean;
 }
 
 export interface DefenseStateJson {
@@ -59,19 +59,19 @@ export interface DefenseStateJson {
 /**
  * 3. Screenplay & Director Extensions
  */
-export type CameraDirectorMode = 
-  | 'SUB_CHASE' 
-  | 'TRACK_ACTOR' 
-  | 'MISSILE_CHASE' 
-  | 'PAN_TO_TARGET' 
-  | 'SKY_PULLAWAY' 
+export type CameraDirectorMode =
+  | 'SUB_CHASE'
+  | 'TRACK_ACTOR'
+  | 'MISSILE_CHASE'
+  | 'PAN_TO_TARGET'
+  | 'SKY_PULLAWAY'
   | 'LANDING_LZ';
 
 export interface DirectorDirective {
   mode: CameraDirectorMode;
-  targetActorId?: string;
-  cameraOffset?: [number, number, number];
-  blendDurationSec?: number;
+  targetActorId: string;
+  cameraOffset: [number, number, number];
+  blendDurationSec: number;
 }
 
 export interface ScriptCue {
@@ -81,8 +81,8 @@ export interface ScriptCue {
   endSec: number;
   actorId: string;
   action: string;
-  fromHex?: string;
-  toHex?: string;
+  fromHex: string;
+  toHex: string;
   headline: string;
   telemetryNote: string;
   director: DirectorDirective;
@@ -98,8 +98,8 @@ export type ReplayTimelineCommand =
       actorId: string;
       variantId: string;
       hexId: string;
-      altitudeOffset?: number;
-      count?: number;
+      altitudeOffset: number;
+      count: number;
     }
   | {
       t: number;
@@ -138,287 +138,16 @@ export type ReplayTimelineCommand =
       newDamageState: 'INTACT' | 'SUPPRESSED' | 'DESTROYED';
     };
 
+export interface BattleResultOutcomes {
+  seadSuccess: boolean;
+  samInterceived: boolean;
+  turnaroundTriggered: boolean;
+}
+
 export interface BattleResultJson extends BattleReport {
   schemaVersion: '1.0';
   variantsRegistry: Record<string, EquipmentVariant>;
   timeline: ReplayTimelineCommand[];
-  outcomes?: {
-    seadSuccess: boolean;
-    samInterceived: boolean;
-    turnaroundTriggered: boolean;
-  };
-  scriptCues?: ScriptCue[];
+  outcomes: BattleResultOutcomes;
+  scriptCues: ScriptCue[];
 }
-
-/**
- * Mock BattleResultJson for the Venezuela Mountain Retreat Raid
- */
-export const MOCK_VENEZUELA_RAID_RESULT: BattleResultJson = {
-  schemaVersion: '1.0',
-  operationId: 'OP-ANDES-NIGHTFALL',
-  newspaperHeadline: 'VENEZUELAN LEADER CAPTURED AT MOUNTAIN RETREAT IN DARING NIGHT RAID',
-  newspaperSubhead: 'SUBMARINE CRUISE MISSILES BLIND AIR DEFENSES SECONDS BEFORE HELO INSERTION',
-  outcomeCode: 'DECAPITATION_SUCCESS',
-  outcomes: {
-    seadSuccess: true,
-    samInterceived: false,
-    turnaroundTriggered: false,
-  },
-  variantsRegistry: {
-    'var-usa-la-sub-tomahawk': {
-      variantId: 'var-usa-la-sub-tomahawk',
-      displayName: 'USS Legacy (Flight I VLS)',
-      factionId: 'USA',
-      chassisId: 'chassis-sub-la-flight1',
-      installedModules: [
-        { slotId: 'vls_bow', moduleId: 'mod-vls-tomahawk-6pack', mountType: 'FIXED' },
-      ],
-      paintScheme: { primaryHex: '#1f2b2d', secondaryHex: '#152224' },
-      computedStats: { totalWeightKg: 6000000, rangeHexes: 40, stealthRating: 92, nightCapable: true },
-    },
-    'var-col-uh60-nightraid': {
-      variantId: 'var-col-uh60-nightraid',
-      displayName: 'UH-60L Night-Hawk (Extended Range)',
-      factionId: 'COL',
-      chassisId: 'chassis-helo-uh60',
-      installedModules: [
-        { slotId: 'pylon_port', moduleId: 'mod-aux-fuel-230gal', mountType: 'CONFIGURABLE' },
-        { slotId: 'pylon_stbd', moduleId: 'mod-hydra70-pod', mountType: 'CONFIGURABLE' },
-        { slotId: 'cabin_bay', moduleId: 'mod-fastrope-rig', mountType: 'CONFIGURABLE' },
-      ],
-      paintScheme: { primaryHex: '#1e293b', secondaryHex: '#0f172a', accentHex: '#38bdf8' },
-      computedStats: { totalWeightKg: 8200, rangeHexes: 12, stealthRating: 68, nightCapable: true },
-    },
-    'var-col-specops-night': {
-      variantId: 'var-col-specops-night',
-      displayName: 'ACOEA Night Assault Detachment',
-      factionId: 'COL',
-      chassisId: 'chassis-inf-squad',
-      installedModules: [
-        { slotId: 'gear_optics', moduleId: 'mod-quad-nvg-package', mountType: 'CONFIGURABLE' },
-      ],
-      paintScheme: { primaryHex: '#0f172a', secondaryHex: '#38bdf8' },
-      computedStats: { totalWeightKg: 650, rangeHexes: 2, stealthRating: 85, nightCapable: true },
-    },
-    'var-ven-radar-p18': {
-      variantId: 'var-ven-radar-p18',
-      displayName: 'P-18 Early Warning Radar',
-      factionId: 'VEN',
-      chassisId: 'chassis-fac-radar',
-      installedModules: [
-        { slotId: 'mast_top', moduleId: 'mod-vhf-array', mountType: 'FIXED' },
-      ],
-      paintScheme: { primaryHex: '#475569', secondaryHex: '#334155' },
-      computedStats: { totalWeightKg: 14000, rangeHexes: 0, stealthRating: 10, nightCapable: true },
-    },
-    'var-ven-sam-s300': {
-      variantId: 'var-ven-sam-s300',
-      displayName: 'S-300VM TELAR Battery',
-      factionId: 'VEN',
-      chassisId: 'chassis-fac-sam',
-      installedModules: [
-        { slotId: 'erector_rack', moduleId: 'mod-sam-4tube-canister', mountType: 'FIXED' },
-      ],
-      paintScheme: { primaryHex: '#3f6212', secondaryHex: '#1f2937' },
-      computedStats: { totalWeightKg: 32000, rangeHexes: 0, stealthRating: 15, nightCapable: true },
-    },
-    'var-munition-tomahawk': {
-      variantId: 'var-munition-tomahawk',
-      displayName: 'BGM-109 Tomahawk',
-      factionId: 'USA',
-      chassisId: 'chassis-munition-cruise',
-      installedModules: [],
-      paintScheme: { primaryHex: '#e2e8f0', secondaryHex: '#ef4444' },
-      computedStats: { totalWeightKg: 1300, rangeHexes: 35, stealthRating: 75, nightCapable: true },
-    },
-  },
-  scriptCues: [
-    {
-      id: 'CUE-01-HELO-TAKEOFF',
-      simClock: '11:59 PM',
-      startSec: 0.0,
-      endSec: 3.0,
-      actorId: 'actor-helo-sqd',
-      action: 'HELICOPTER_TAKEOFF',
-      fromHex: 'HEX-COL-ARAUCA-FOB',
-      headline: '11:59 PM — STAGING AREA: ROTOR BLADES ENGAGE AT ARAUCA FOB',
-      telemetryNote: '3x UH-60L Night-Hawks lift off, initiating low-speed ingress toward border.',
-      director: { mode: 'TRACK_ACTOR', targetActorId: 'actor-helo-sqd', cameraOffset: [-3.0, 1.8, 3.5] }
-    },
-    {
-      id: 'CUE-02-SUB-SEAD',
-      simClock: '01:45 AM',
-      startSec: 3.0,
-      endSec: 9.5,
-      actorId: 'actor-sub-01',
-      action: 'SUB_LAUNCH',
-      fromHex: 'HEX-CARIBBEAN-SUB-01',
-      toHex: 'HEX-VEN-MARACAY-DEPOT',
-      headline: '01:45 AM — CARIBBEAN SECTOR: 6-MISSILE SEAD SALVO',
-      telemetryNote: 'Submarine broaches VLS tubes; Tomahawks streak toward coastal radar & S-300.',
-      director: { mode: 'MISSILE_CHASE', targetActorId: 'actor-sub-01', cameraOffset: [0, 1.2, -3.5] }
-    },
-    {
-      id: 'CUE-03-RADAR-STRIKE',
-      simClock: '02:20 AM',
-      startSec: 9.5,
-      endSec: 11.5,
-      actorId: 'actor-radar-01',
-      action: 'RADAR_STRIKE',
-      fromHex: 'HEX-VEN-MARACAY-DEPOT',
-      headline: '02:20 AM — MARACAY DEPOT: P-18 RADAR NEUTRALIZED',
-      telemetryNote: 'Precision impact shatters radar array; holding on smoking rubble for corridor clearance.',
-      director: { mode: 'PAN_TO_TARGET', targetActorId: 'actor-radar-01', cameraOffset: [0, 3.0, -4.0] }
-    },
-    {
-      id: 'CUE-04-BORDER-CROSSING',
-      simClock: '02:40 AM',
-      startSec: 11.5,
-      endSec: 17.5,
-      actorId: 'actor-helo-sqd',
-      action: 'BORDER_CROSSING',
-      fromHex: 'HEX-COL-ARAUCA-FOB',
-      toHex: 'HEX-VEN-CARACAS-OUTSKIRTS',
-      headline: '02:40 AM — FRONTIER: SQUADRON CROSSES BORDER UNDER SEAD CORRIDOR',
-      telemetryNote: 'Camera reunites with Blackhawks as they cross the border into blinded air space.',
-      director: { mode: 'TRACK_ACTOR', targetActorId: 'actor-helo-sqd', cameraOffset: [-2.5, 1.5, 3.0] }
-    },
-    {
-      id: 'CUE-05-LZ-INSERTION',
-      simClock: '03:05 AM',
-      startSec: 17.5,
-      endSec: 22.0,
-      actorId: 'actor-specops-01',
-      action: 'LZ_INSERTION',
-      fromHex: 'HEX-VEN-CARACAS-OUTSKIRTS',
-      headline: '03:05 AM — MOUNTAIN RETREAT: SPECOPS DEPLOYED & HVT SECURED',
-      telemetryNote: 'Fast-rope insertion successful; fading to black for AAR review.',
-      director: { mode: 'SKY_PULLAWAY', targetActorId: 'actor-specops-01', cameraOffset: [0, 14.0, 18.0] }
-    }
-  ],
-  chapters: [
-    {
-      id: 'CH-1-SUB-SEAD-SALVO',
-      startSec: 0.0,
-      endSec: 11.0,
-      simClock: '02:15 AM',
-      cameraMode: 'SUB_CHASE',
-      focusHexId: 'HEX-CARIBBEAN-SUB-01',
-      secondaryHexId: 'HEX-VEN-MARACAY-DEPOT',
-      cameraOffset: [2.0, -0.8, 3.5],
-      headline: '02:15 AM — SUBMARINE LAUNCHES 6-MISSILE SEAD SALVO',
-      telemetryNote: 'Legacy attack sub broaches 6 Tomahawks targeting coastal Radar & S-300 battery.',
-    },
-    {
-      id: 'CH-2-BLACKHAWK-INGRESS',
-      startSec: 11.0,
-      endSec: 19.0,
-      simClock: '02:40 AM',
-      cameraMode: 'TRACK_ACTOR',
-      focusHexId: 'HEX-VEN-CARACAS-OUTSKIRTS',
-      cameraOffset: [1.8, 1.6, 3.0],
-      headline: '02:40 AM — EXTENDED-RANGE BLACKHAWKS BREACH MOUNTAIN PASS',
-      telemetryNote: 'Blinded air defenses fail to track low-altitude NVG flight into mountain retreat.',
-    },
-    {
-      id: 'CH-3-HVT-CAPTURE',
-      startSec: 19.0,
-      endSec: 24.0,
-      simClock: '03:05 AM',
-      cameraMode: 'SKY_PULLAWAY',
-      focusHexId: 'HEX-VEN-MIRAFLORES-COMPOUND',
-      cameraOffset: [0, 14.0, 18.0],
-      headline: '03:05 AM — CUBAN GUARD OVERWHELMED; HVT SECURED',
-      telemetryNote: 'Night-trained SpecOps breach compound under NVG advantage; light guard neutralised.',
-    },
-  ] satisfies BattleChapter[],
-  timeline: [
-    {
-      t: 0.0,
-      cmd: 'SPAWN',
-      actorId: 'actor-sub-01',
-      variantId: 'var-usa-la-sub-tomahawk',
-      hexId: 'HEX-CARIBBEAN-SUB-01',
-      altitudeOffset: -1.5,
-    },
-    {
-      t: 0.0,
-      cmd: 'SPAWN',
-      actorId: 'actor-radar-01',
-      variantId: 'var-ven-radar-p18',
-      hexId: 'HEX-VEN-MARACAY-DEPOT',
-    },
-    {
-      t: 0.0,
-      cmd: 'SPAWN',
-      actorId: 'actor-sam-01',
-      variantId: 'var-ven-sam-s300',
-      hexId: 'HEX-VEN-MARACAY-DEPOT',
-    },
-    {
-      t: 3.0,
-      cmd: 'EMIT_PROJECTILE',
-      sourceActorId: 'actor-sub-01',
-      sourceSlotId: 'vls_bow',
-      targetActorId: 'actor-radar-01',
-      targetHexId: 'HEX-VEN-MARACAY-DEPOT',
-      munitionVariantId: 'var-munition-tomahawk',
-      salvoCount: 6,
-      flightDurationSec: 6.5,
-      staggerSec: 0.45,
-    },
-    {
-      t: 9.5,
-      cmd: 'IMPACT_STRIKE',
-      targetActorId: 'actor-radar-01',
-      hexId: 'HEX-VEN-MARACAY-DEPOT',
-      newDamageState: 'DESTROYED',
-    },
-    {
-      t: 9.8,
-      cmd: 'IMPACT_STRIKE',
-      targetActorId: 'actor-sam-01',
-      hexId: 'HEX-VEN-MARACAY-DEPOT',
-      newDamageState: 'SUPPRESSED',
-    },
-    {
-      t: 0.0,
-      cmd: 'SPAWN',
-      actorId: 'actor-helo-sqd',
-      variantId: 'var-col-uh60-nightraid',
-      hexId: 'HEX-COL-ARAUCA-FOB',
-      count: 3,
-    },
-    {
-      t: 0.0,
-      cmd: 'MOVE_PATH',
-      actorId: 'actor-helo-sqd',
-      waypointHexIds: ['HEX-COL-ARAUCA-FOB', 'HEX-VEN-CARACAS-OUTSKIRTS'],
-      durationSec: 22.0,
-      altitudeProfile: 'NAP_OF_THE_EARTH',
-    },
-    {
-      t: 17.5,
-      cmd: 'DEPLOY_SUB_UNIT',
-      parentActorId: 'actor-helo-sqd',
-      sourceSlotId: 'cabin_bay',
-      childActorId: 'actor-specops-01',
-      childVariantId: 'var-col-specops-night',
-      landingHexId: 'HEX-VEN-CARACAS-OUTSKIRTS',
-    },
-  ],
-  aarSummary: {
-    casualties: {
-      attacker: '0 Aircraft, 1 SpecOps Wounded',
-      defender: 'P-18 Radar Destroyed, S-300 Blinded, Guard Detail Captured',
-    },
-    keyEvents: [
-      '11:59 PM: UH-60L Squadron lifts off from Arauca FOB staging area.',
-      '01:45 AM: 6 Tomahawks launched from submarine VLS hardpoint.',
-      '02:20 AM: Coastal Radar destroyed; S-300 battery blinded.',
-      '02:40 AM: Squadron crosses border under SEAD corridor protection.',
-      '03:05 AM: SpecOps inserted at mountain retreat; HVT captured.',
-    ],
-    rewards: ['HVT Captured', 'IADS West Sector Blinded'],
-  },
-};

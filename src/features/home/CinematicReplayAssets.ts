@@ -29,7 +29,8 @@ export interface ReplaySceneAssets {
 
 export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAssets {
   const replayGroup = new THREE.Group();
-  replayGroup.name = 'TacticalCinematicReplayGroup';
+  const reportIdTag = report && report.id ? report.id : 'default';
+  replayGroup.name = `TacticalCinematicReplayGroup_${reportIdTag}`;
 
   // --- 1. ATMOSPHERIC & ENVIRONMENTAL SETUP ---
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
@@ -59,7 +60,7 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
   const depotHexCenter = getHexCenterPosition(TARGET_Q, TARGET_R);
   const depotTarget = new THREE.Vector3(depotHexCenter.x, depotHexCenter.y, depotHexCenter.z);
   const depotWx = HEX_WIDTH * (TARGET_Q + TARGET_R / 2);
-  const depotWy = (HEX_HEIGHT * 3 / 4) * TARGET_R;
+  const depotWy = ((HEX_HEIGHT * 3) / 4) * TARGET_R;
 
   // LZ shares hex (0, 4) using the same helper positioning
   const lzPos = depotTarget.clone();
@@ -87,7 +88,7 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
   // Position at hex center Y and sink to underwater depth offset
   const SUB_DEPTH_OFFSET = 0.5;
   subGroup.position.set(subHexCenter.x, subHexCenter.y - SUB_DEPTH_OFFSET, subHexCenter.z);
-  
+
   // Strict horizontal yaw-only rotation toward depot
   const angle = Math.atan2(depotTarget.x - subGroup.position.x, depotTarget.z - subGroup.position.z);
   subGroup.rotation.set(0, angle, 0);
@@ -192,8 +193,14 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
 
     const stage1SmokeGroup = new THREE.Group();
     stage1SmokeGroup.position.set(0, 0, -0.35);
-    const smokeMat = new THREE.MeshStandardMaterial({ color: 0x71717a, roughness: 0.9, metalness: 0.1, transparent: true, opacity: 0.95 });
-    
+    const smokeMat = new THREE.MeshStandardMaterial({
+      color: 0x71717a,
+      roughness: 0.9,
+      metalness: 0.1,
+      transparent: true,
+      opacity: 0.95,
+    });
+
     const bubble1 = new THREE.Mesh(new THREE.SphereGeometry(0.12, 8, 8), smokeMat);
     bubble1.position.set(0, 0, -0.05);
     const bubble2 = new THREE.Mesh(new THREE.SphereGeometry(0.15, 8, 8), smokeMat);
@@ -322,7 +329,9 @@ export function buildCinematicReplayAssets(report: BattleReport): ReplaySceneAss
     roofSlab1,
     roofSlab2,
     smokeGroup,
-    get isDepotDestroyed() { return isDepotDestroyed; },
+    get isDepotDestroyed() {
+      return isDepotDestroyed;
+    },
     triggerImpactExplosion,
   };
 }

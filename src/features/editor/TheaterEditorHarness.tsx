@@ -38,10 +38,11 @@ export const TheaterEditorHarness: React.FC<TheaterEditorHarnessProps> = ({
   }
 
   const handleDownloadAllTs = () => {
-    const files = buildTypeScriptChunkFiles(cities, fillerHexes, 9);
+    const files = buildTypeScriptChunkFiles(cities, fillerHexes, '9');
     Object.entries(files).forEach(([filename, content], idx) => {
       setTimeout(() => {
-        const blob = new Blob([content], { type: 'text/typescript' });
+        const blobPart: BlobPart = typeof content === 'string' ? content : String(content);
+        const blob = new Blob([blobPart], { type: 'text/typescript' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -60,9 +61,9 @@ export const TheaterEditorHarness: React.FC<TheaterEditorHarnessProps> = ({
       </div>
 
       <p className="text-[11px] text-slate-400 leading-relaxed">
-        • Click a city to reposition it.<br />
-        • Run <span className="text-emerald-400">Auto-Fill</span> for convex hull.<br />
-        • Enable <span className="text-rose-400">Purge Mode</span> to click & delete stray hexes.
+- Click a city to reposition it.<br />
+- Run <span className="text-emerald-400">Auto-Fill</span> for convex hull.<br />
+- Enable <span className="text-rose-400">Purge Mode</span> to click & delete stray hexes.
       </p>
 
       {/* City List */}

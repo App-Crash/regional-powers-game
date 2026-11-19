@@ -97,6 +97,10 @@ export interface BattleChapter {
   simClock: string;
   headline: string;
   telemetryNote: string;
+  cameraMode: string;
+  focusHexId: string;
+  secondaryHexId?: string;
+  cameraOffset: [number, number, number];
 }
 
 export interface BattleCasualtiesSummary {

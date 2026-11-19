@@ -5,7 +5,7 @@ import { useTheaterEditor } from './features/editor/TheaterEditorState';
 import { TheaterEditorUI } from './features/editor/TheaterEditorUI';
 import { getEraThemeConfig } from './services/theater/eraConfig';
 import { MOCK_CARACAS_REPORT } from './data/mockOperationCaracas';
-import { MOCK_VENEZUELA_RAID_RESULT } from './types/operationSchema';
+import { MOCK_VENEZUELA_RAID_RESULT } from './data/mockVenezuelaRaidResult';
 import { NewspaperModal } from './components/NewspaperModal';
 import { type BattleReport } from './types/battleReport';
 
@@ -13,10 +13,10 @@ export const App: React.FC = () => {
   const [activeBattleReport, setActiveBattleReport] = useState<BattleReport | null>(null);
   const [showNewspaper, setShowNewspaper] = useState(false);
   const [hudState, setHudState] = useState({ simClock: '01:00 AM', headline: '', note: '' });
-  
+
   const editor = useTheaterEditor();
 
-  const isDeveloper = true; 
+  const isDeveloper = true;
   const era = 'cold_war_1983';
   const theme = getEraThemeConfig(era);
 
@@ -123,15 +123,15 @@ export const App: React.FC = () => {
       )}
 
       <div className="flex-1 relative w-full overflow-hidden">
-        <PlayerHomeViewport 
+        <PlayerHomeViewport
           editor={editor}
           onLaunchCampaign={handleLaunchCampaign}
           {...({
             activeBattleReport,
             onBattleComplete: () => setShowNewspaper(true),
-            onTimeUpdate: (simClock: string, headline: string, note: string) => 
+            onTimeUpdate: (simClock: string, headline: string, note: string) =>
               setHudState({ simClock, headline, note })
-          } as any)} 
+          } as any)}
         />
       </div>
 

@@ -1,108 +1,71 @@
 // src/features/weapons/WeaponAssetBuilder.ts
 import * as THREE from 'three';
 
+export type WeaponAssetKind = 'atgm' | 's300' | 'cruise_missile';
+
+export type WeaponLaunchPhase = 'STOWED' | 'EJECTION' | 'DEPLOYMENT' | 'CRUISE';
+
 export interface WeaponAssetRig {
-  rootGroup: THREE.Group;
-  leftWingPivot: THREE.Group;
-  rightWingPivot: THREE.Group;
-  coldLaunchVapor: THREE.Mesh;
-  sustainerFlame: THREE.Mesh;
-  setWingDeployment: (alpha: number) => void; // 0 = fully stowed (flush), 1 = fully deployed
-  setLaunchPhase: (phase: 'STOWED' | 'EJECTION' | 'DEPLOYMENT' | 'CRUISE') => void;
+  group: THREE.Group;
+  setLaunchPhase: (phase: WeaponLaunchPhase) => void;
+  setWingDeployment: (progress: number) => void;
+  dispose: () => void;
 }
 
-export function createWeaponAsset(weaponType: 'atgm' | 's300' | 'cruise_missile'): WeaponAssetRig {
-  const rootGroup = new THREE.Group();
-  const bodyMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 });
+export function createWeaponAsset(weaponType: WeaponAssetKind): WeaponAssetRig {
+  const group = new THREE.Group();
+  group.name = `weapon_asset_${weaponType}`;
 
-  // Fuselage body
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.5, 8), bodyMat);
-  body.rotation.x = Math.PI / 2;
+  const bodyGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.9, 12);
+  bodyGeo.rotateX(Math.PI / 2);
 
-  // Warhead / Nose cone
-  const nose = new THREE.Mesh(
-    new THREE.ConeGeometry(0.04, 0.15, 8),
-    new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.2 })
-  );
-  nose.rotation.x = Math.PI / 2;
-  nose.position.z = 0.32;
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: weaponType === 's300' ? 0x475569 : weaponType === 'atgm' ? 0x3f6212 : 0xe2e8f0,
+    metalness: 0.65,
+    roughness: 0.35,
+  });
 
-  // Articulated Wing Pivots (Allows folding flush inside tube/rail)
-  const leftWingPivot = new THREE.Group();
-  leftWingPivot.position.set(-0.02, 0, 0.05);
-  const leftWing = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.012, 0.16), bodyMat);
-  leftWing.position.set(-0.16, 0, 0);
-  leftWingPivot.add(leftWing);
+  const bodyMesh = new THREE.Mesh(bodyGeo, bodyMat);
+  bodyMesh.name = `weapon_body_${weaponType}`;
+  group.add(bodyMesh);
 
-  const rightWingPivot = new THREE.Group();
-  rightWingPivot.position.set(0.02, 0, 0.05);
-  const rightWing = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.012, 0.16), bodyMat);
-  rightWing.position.set(0.16, 0, 0);
-  rightWingPivot.add(rightWing);
+  const leftWingGeo = new THREE.BoxGeometry(0.24, 0.012, 0.14);
+  const rightWingGeo = new THREE.BoxGeometry(0.24, 0.012, 0.14);
+  const leftWing = new THREE.Mesh(leftWingGeo, bodyMat);
+  const rightWing = new THREE.Mesh(rightWingGeo, bodyMat);
+  leftWing.position.set(-0.14, 0, 0);
+  rightWing.position.set(0.14, 0, 0);
+  leftWing.scale.set(0.001, 1, 1);
+  rightWing.scale.set(0.001, 1, 1);
+  group.add(leftWing, rightWing);
 
-  // Cold-launch expulsion gas (White vapor puff for Stage 1)
-  const coldLaunchVapor = new THREE.Mesh(
-    new THREE.ConeGeometry(0.09, 0.45, 8),
-    new THREE.MeshBasicMaterial({ color: 0xf8fafc, transparent: true, opacity: 0.9 })
-  );
-  coldLaunchVapurRotate(coldLaunchVapor);
-
-  // Sustainer motor flame (Blue/white core for Stage 3)
-  const sustainerFlame = new THREE.Mesh(
-    new THREE.ConeGeometry(0.06, 0.38, 8),
-    new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.95 })
-  );
-  sustainerFlame.rotateX(-Math.PI / 2);
-  sustainerFlame.position.z = -0.38;
-  sustainerFlame.visible = false;
-
-  rootGroup.add(body, nose, leftWingPivot, rightWingPivot, coldLaunchVapor, sustainerFlame);
-
-  // Helper function to handle wing rotation smoothly
-  const setWingDeployment = (alpha: number) => {
-    // alpha 0 = folded 90 deg flush; alpha 1 = deployed 0 deg flat
-    const angle = THREE.MathUtils.lerp(Math.PI / 2, 0, alpha);
-    leftWingPivot.rotation.z = angle;
-    rightWingPivot.rotation.z = -angle;
+  const setWingDeployment = (progress: number): void => {
+    const clamped = THREE.MathUtils.clamp(progress, 0, 1);
+    const wingScale = THREE.MathUtils.lerp(0.001, 1.0, clamped);
+    leftWing.scale.set(wingScale, 1, 1);
+    rightWing.scale.set(wingScale, 1, 1);
   };
 
-  const setLaunchPhase = (phase: 'STOWED' | 'EJECTION' | 'DEPLOYMENT' | 'CRUISE') => {
-    switch (phase) {
-      case 'STOWED':
-        setWingDeployment(0);
-        coldLaunchVapor.visible = false;
-        sustainerFlame.visible = false;
-        break;
-      case 'EJECTION':
-        setWingDeployment(0); // Stowed inside tube/rail
-        coldLaunchVapor.visible = true;
-        sustainerFlame.visible = false;
-        break;
-      case 'DEPLOYMENT':
-        setWingDeployment(0.5); // Mid-snap
-        coldLaunchVapor.visible = false;
-        sustainerFlame.visible = true;
-        break;
-      case 'CRUISE':
-        setWingDeployment(1.0); // Fully locked
-        coldLaunchVapor.visible = false;
-        sustainerFlame.visible = true;
-        break;
+  const setLaunchPhase = (phase: WeaponLaunchPhase): void => {
+    group.userData.launchPhase = phase;
+    if (phase === 'STOWED' || phase === 'EJECTION') {
+      setWingDeployment(0);
+    } else if (phase === 'CRUISE') {
+      setWingDeployment(1);
     }
   };
 
-  return {
-    rootGroup,
-    leftWingPivot,
-    rightWingPivot,
-    coldLaunchVapor,
-    sustainerFlame,
-    setWingDeployment,
-    setLaunchPhase,
+  const dispose = (): void => {
+    bodyGeo.dispose();
+    leftWingGeo.dispose();
+    rightWingGeo.dispose();
+    bodyMat.dispose();
   };
-}
 
-function coldLaunchVapurRotate(mesh: THREE.Mesh) {
-  mesh.rotateX(-Math.PI / 2);
-  mesh.position.z = -0.4;
+  return {
+    group,
+    setLaunchPhase,
+    setWingDeployment,
+    dispose,
+  };
 }

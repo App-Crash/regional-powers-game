@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { type RuntimeHexEntity } from '../../features/home/HexTypes';
-import { buildTypeScriptChunkFiles } from './TheaterEditorEngine';
+import { buildTypeScriptChunkFiles } from '../../features/editor/TheaterEditorEngine';
 
 interface TheaterEditorPanelProps {
   cities: RuntimeHexEntity[];
@@ -27,10 +27,11 @@ export const TheaterEditorPanel: React.FC<TheaterEditorPanelProps> = ({
   const [exportedPreview, setExportedPreview] = useState<string | null>(null);
 
   const handleDownloadAllTs = () => {
-    const files = buildTypeScriptChunkFiles(cities, fillerHexes, 9);
+    const files = buildTypeScriptChunkFiles(cities, fillerHexes, '9');
     Object.entries(files).forEach(([filename, content], idx) => {
       setTimeout(() => {
-        const blob = new Blob([content], { type: 'text/typescript' });
+        const blobPart: BlobPart = typeof content === 'string' ? content : String(content);
+        const blob = new Blob([blobPart], { type: 'text/typescript' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -39,7 +40,8 @@ export const TheaterEditorPanel: React.FC<TheaterEditorPanelProps> = ({
         URL.revokeObjectURL(url);
       }, idx * 120);
     });
-    setExportedPreview(files['ven1.ts']);
+    const firstChunk = files['ven1.ts'];
+    setExportedPreview(typeof firstChunk === 'string' ? firstChunk : null);
   };
 
   // Floating Dev Mode Toggle Button when closed
@@ -67,9 +69,9 @@ export const TheaterEditorPanel: React.FC<TheaterEditorPanelProps> = ({
       </div>
 
       <p className="text-[11px] text-slate-400 leading-relaxed">
-        • Click a city to reposition it.<br />
-        • Use <span className="text-emerald-400">Auto-Fill</span> for the hull.<br />
-        • Enable <span className="text-rose-400">Purge Mode</span> to click & delete stray hexes.
+- Click a city to reposition it.<br />
+- Use <span className="text-emerald-400">Auto-Fill</span> for the hull.<br />
+- Enable <span className="text-rose-400">Purge Mode</span> to click & delete stray hexes.
       </p>
 
       {/* City Selector List */}

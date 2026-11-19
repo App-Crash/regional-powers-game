@@ -1,12 +1,11 @@
 import * as THREE from 'three';
-import { createHexHighlightMesh, GLOBAL_HEX_DATA, axialToWorld } from './HexGridLayer';
-import type { HexData, RuntimeHexEntity } from './HexTypes';
+import { createHexHighlightMesh, GLOBAL_HEX_DATA } from './HexGridLayer';
+import type { HexData } from './HexTypes';
 import { playSoundForHex, stopSectorSound } from './sectorAudio';
 
 export function setupHexSelection(
   domElement: HTMLElement,
   camera: THREE.Camera,
-  scene: THREE.Scene,
   hexGridGroup: THREE.Group,
   onSelectHex: (hex: HexData | null) => void
 ) {
